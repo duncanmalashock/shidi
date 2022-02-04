@@ -2,6 +2,9 @@ module Main exposing (main)
 
 import Browser
 import Html exposing (Html)
+import Music.Pitch
+import Music.PitchClass
+import Step exposing (Step)
 
 
 main : Program () Model Msg
@@ -15,14 +18,23 @@ main =
 
 
 type alias Model =
-    {}
+    { steps : List Step
+    }
 
 
 init : () -> ( Model, Cmd msg )
 init flags =
-    ( {}
+    ( initialModel
     , Cmd.none
     )
+
+
+initialModel : Model
+initialModel =
+    { steps =
+        [ Step.init
+        ]
+    }
 
 
 type Msg
@@ -33,15 +45,23 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         NoOp ->
-            ( {}, Cmd.none )
+            ( model, Cmd.none )
 
 
 view : Model -> { title : String, body : List (Html Msg) }
 view model =
     { title = "App"
     , body =
-        [ Html.text "hey world" ]
+        List.map viewStep model.steps
     }
+
+
+viewStep : Step -> Html Msg
+viewStep step =
+    Html.div []
+        [ Html.text (Music.PitchClass.toString (Step.scaleRoot step))
+        , Html.text (Music.Pitch.toString (Step.pitch step))
+        ]
 
 
 subscriptions : Model -> Sub Msg
