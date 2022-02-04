@@ -4,6 +4,7 @@ module Step exposing
     , pitch
     , scaleRoot
     , scaleType
+    , setScaleRoot
     )
 
 import Music.Pitch
@@ -55,8 +56,8 @@ setScaleType newScaleType (Step details) =
         }
 
 
-setScalePitchClass : Music.PitchClass.PitchClass -> Step -> Step
-setScalePitchClass newPitchClass (Step details) =
+setScaleRoot : Music.PitchClass.PitchClass -> Step -> Step
+setScaleRoot newPitchClass (Step details) =
     Step
         { details
             | scaleRoot = newPitchClass

@@ -1,7 +1,10 @@
 module Main exposing (main)
 
 import Browser
+import Browser.Events
 import Html exposing (Html)
+import Json.Decode
+import Keyboard.Event
 import Music.Pitch
 import Music.PitchClass
 import Step exposing (Step)
@@ -39,6 +42,12 @@ initialModel =
 
 type Msg
     = NoOp
+    | KeyEventReceived KeyEvent
+
+
+type KeyEvent
+    = KeyUp
+    | KeyDown
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -46,6 +55,24 @@ update msg model =
     case msg of
         NoOp ->
             ( model, Cmd.none )
+
+        KeyEventReceived keyEvent ->
+            ( { model
+                | steps = updateStep 0 keyEvent model.steps
+              }
+            , Cmd.none
+            )
+
+
+updateStep : Int -> KeyEvent -> List Step -> List Step
+updateStep index keyEvent steps =
+    List.map
+        (\step ->
+            step
+                |> Step.setScaleRoot
+                    Music.PitchClass.f
+        )
+        steps
 
 
 view : Model -> { title : String, body : List (Html Msg) }
@@ -66,4 +93,30 @@ viewStep step =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    Browser.Events.onKeyDown
+        (Keyboard.Event.decodeKeyboardEvent
+            |> Json.Decode.andThen decodeKeyEvent
+        )
+
+
+decodeKeyEvent : Keyboard.Event.KeyboardEvent -> Json.Decode.Decoder Msg
+decodeKeyEvent keyboardEvent =
+    let
+        toKeyEvent : Maybe KeyEvent
+        toKeyEvent =
+            if keyboardEvent.key == Just "ArrowUp" then
+                Just KeyUp
+
+            else if keyboardEvent.key == Just "ArrowDown" then
+                Just KeyDown
+
+            else
+                Nothing
+    in
+    toKeyEvent
+        |> Maybe.map
+            (\keyEvent ->
+                Json.Decode.succeed (KeyEventReceived keyEvent)
+            )
+        |> Maybe.withDefault
+            (Json.Decode.fail "Not a relevant key event")

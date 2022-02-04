@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "build": "elm make src/Main.elm --output=dist/main.js"
+    "build": "elm make src/Main.elm --output=dist/main.js --debug"
   },
   "author": "",
   "license": "ISC"
