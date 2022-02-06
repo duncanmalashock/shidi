@@ -4,7 +4,7 @@ import Browser
 import Browser.Events
 import Html exposing (Html)
 import Json.Decode
-import Keyboard.Event
+import Keyboard
 import Music.Pitch
 import Music.PitchClass
 import Step exposing (Step)
@@ -22,6 +22,7 @@ main =
 
 type alias Model =
     { steps : List Step
+    , pressedKeys : List Keyboard.Key
     }
 
 
@@ -37,17 +38,13 @@ initialModel =
     { steps =
         [ Step.init
         ]
+    , pressedKeys = []
     }
 
 
 type Msg
     = NoOp
-    | KeyEventReceived KeyEvent
-
-
-type KeyEvent
-    = KeyUp
-    | KeyDown
+    | KeyMsg Keyboard.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -56,21 +53,64 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
 
-        KeyEventReceived keyEvent ->
-            ( { model
-                | steps = updateStep 0 keyEvent model.steps
-              }
-            , Cmd.none
-            )
+        KeyMsg keyMsg ->
+            let
+                ( pressedKeys, maybeKeyChange ) =
+                    Keyboard.updateWithKeyChange
+                        Keyboard.anyKeyOriginal
+                        keyMsg
+                        model.pressedKeys
+            in
+            { model | pressedKeys = pressedKeys }
+                |> handleKeyChange maybeKeyChange
 
 
-updateStep : Int -> KeyEvent -> List Step -> List Step
-updateStep index keyEvent steps =
+handleKeyChange : Maybe Keyboard.KeyChange -> Model -> ( Model, Cmd msg )
+handleKeyChange maybeKeyChange model =
+    case maybeKeyChange of
+        Just key ->
+            case key of
+                Keyboard.KeyDown Keyboard.ArrowDown ->
+                    ( { model
+                        | steps =
+                            updateStep 0 PitchChangeDown model.steps
+                      }
+                    , Cmd.none
+                    )
+
+                Keyboard.KeyDown Keyboard.ArrowUp ->
+                    ( { model
+                        | steps =
+                            updateStep 0 PitchChangeUp model.steps
+                      }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        Nothing ->
+            ( model, Cmd.none )
+
+
+type PitchChange
+    = PitchChangeUp
+    | PitchChangeDown
+
+
+updateStep : Int -> PitchChange -> List Step -> List Step
+updateStep index pitchChange steps =
     List.map
         (\step ->
             step
                 |> Step.setScaleRoot
-                    Music.PitchClass.f
+                    (case pitchChange of
+                        PitchChangeUp ->
+                            Music.PitchClass.d
+
+                        PitchChangeDown ->
+                            Music.PitchClass.b
+                    )
         )
         steps
 
@@ -93,30 +133,4 @@ viewStep step =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Browser.Events.onKeyDown
-        (Keyboard.Event.decodeKeyboardEvent
-            |> Json.Decode.andThen decodeKeyEvent
-        )
-
-
-decodeKeyEvent : Keyboard.Event.KeyboardEvent -> Json.Decode.Decoder Msg
-decodeKeyEvent keyboardEvent =
-    let
-        toKeyEvent : Maybe KeyEvent
-        toKeyEvent =
-            if keyboardEvent.key == Just "ArrowUp" then
-                Just KeyUp
-
-            else if keyboardEvent.key == Just "ArrowDown" then
-                Just KeyDown
-
-            else
-                Nothing
-    in
-    toKeyEvent
-        |> Maybe.map
-            (\keyEvent ->
-                Json.Decode.succeed (KeyEventReceived keyEvent)
-            )
-        |> Maybe.withDefault
-            (Json.Decode.fail "Not a relevant key event")
+    Sub.map KeyMsg Keyboard.subscriptions
