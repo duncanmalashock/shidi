@@ -5,8 +5,10 @@ module Step exposing
     , scaleRoot
     , scaleType
     , setScaleRoot
+    , step
     )
 
+import Music.Internal.ScaleStepper as ScaleStepper
 import Music.Pitch
 import Music.PitchClass
 import Music.Scale
@@ -20,7 +22,7 @@ type Step
 type alias Details =
     { scaleRoot : Music.PitchClass.PitchClass
     , scaleType : Music.ScaleType.ScaleType
-    , pitch : Music.Pitch.Pitch
+    , stepper : ScaleStepper.ScaleStepper
     }
 
 
@@ -29,7 +31,9 @@ init =
     Step
         { scaleRoot = Music.PitchClass.c
         , scaleType = Music.ScaleType.major
-        , pitch = Music.Pitch.c4
+        , stepper =
+            --ScaleStepper.initChromatic Music.Pitch.c4
+            ScaleStepper.init Music.Pitch.c4 (Music.Scale.major Music.PitchClass.c)
         }
 
 
@@ -45,7 +49,7 @@ scaleRoot (Step details) =
 
 pitch : Step -> Music.Pitch.Pitch
 pitch (Step details) =
-    details.pitch
+    ScaleStepper.currentPitch details.stepper
 
 
 setScaleType : Music.ScaleType.ScaleType -> Step -> Step
@@ -67,3 +71,8 @@ setScaleRoot newPitchClass (Step details) =
 scale : Step -> Music.Scale.Scale
 scale (Step details) =
     Music.Scale.custom details.scaleRoot details.scaleType
+
+
+step : Int -> Step -> Step
+step steps (Step details) =
+    Step { details | stepper = ScaleStepper.step steps details.stepper }

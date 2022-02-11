@@ -1,9 +1,7 @@
 module Main exposing (main)
 
 import Browser
-import Browser.Events
 import Html exposing (Html)
-import Json.Decode
 import Keyboard
 import Music.Pitch
 import Music.PitchClass
@@ -73,7 +71,7 @@ handleKeyChange maybeKeyChange model =
                 Keyboard.KeyDown Keyboard.ArrowDown ->
                     ( { model
                         | steps =
-                            updateStep 0 PitchChangeDown model.steps
+                            updateStep 0 -1 model.steps
                       }
                     , Cmd.none
                     )
@@ -81,7 +79,7 @@ handleKeyChange maybeKeyChange model =
                 Keyboard.KeyDown Keyboard.ArrowUp ->
                     ( { model
                         | steps =
-                            updateStep 0 PitchChangeUp model.steps
+                            updateStep 0 1 model.steps
                       }
                     , Cmd.none
                     )
@@ -93,24 +91,12 @@ handleKeyChange maybeKeyChange model =
             ( model, Cmd.none )
 
 
-type PitchChange
-    = PitchChangeUp
-    | PitchChangeDown
-
-
-updateStep : Int -> PitchChange -> List Step -> List Step
-updateStep index pitchChange steps =
+updateStep : Int -> Int -> List Step -> List Step
+updateStep index stepAmount steps =
     List.map
         (\step ->
             step
-                |> Step.setScaleRoot
-                    (case pitchChange of
-                        PitchChangeUp ->
-                            Music.PitchClass.d
-
-                        PitchChangeDown ->
-                            Music.PitchClass.b
-                    )
+                |> Step.step stepAmount
         )
         steps
 
