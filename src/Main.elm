@@ -5,6 +5,7 @@ import Html exposing (Html)
 import Keyboard
 import Music.Pitch
 import Music.PitchClass
+import Music.ScaleType
 import Step exposing (Step)
 
 
@@ -113,6 +114,7 @@ viewStep : Step -> Html Msg
 viewStep step =
     Html.div []
         [ Html.text (Music.PitchClass.toString (Step.scaleRoot step))
+        , Html.text (Music.ScaleType.name (Step.scaleType step) |> Maybe.withDefault "")
         , Html.text (Music.Pitch.toString (Step.pitch step))
         ]
 
