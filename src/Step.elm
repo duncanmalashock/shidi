@@ -1,14 +1,19 @@
 module Step exposing
-    ( Step
-    , init
-    , pitch
-    , scaleRoot
-    , scaleType
-    , setScaleRoot
-    , step
+    ( Step, init
+    , id, pitch, scaleType, scaleRoot
+    , setPitch, setScaleType, setScaleRoot
     )
 
-import Music.Internal.ScaleStepper as ScaleStepper
+{-|
+
+@docs Step, init
+
+@docs id, pitch, scaleType, scaleRoot
+@docs setPitch, setScaleType, setScaleRoot
+
+-}
+
+import Id
 import Music.Pitch
 import Music.PitchClass
 import Music.Scale
@@ -22,7 +27,8 @@ type Step
 type alias Details =
     { scaleRoot : Music.PitchClass.PitchClass
     , scaleType : Music.ScaleType.ScaleType
-    , stepper : ScaleStepper.ScaleStepper
+    , pitch : Music.Pitch.Pitch
+    , id : Id.Id
     }
 
 
@@ -31,10 +37,14 @@ init =
     Step
         { scaleRoot = Music.PitchClass.c
         , scaleType = Music.ScaleType.major
-        , stepper =
-            --ScaleStepper.initChromatic Music.Pitch.c4
-            ScaleStepper.init Music.Pitch.c4 (Music.Scale.major Music.PitchClass.c)
+        , pitch = Music.Pitch.c4
+        , id = Id.id 0
         }
+
+
+id : Step -> Id.Id
+id (Step details) =
+    details.id
 
 
 scaleType : Step -> Music.ScaleType.ScaleType
@@ -49,7 +59,7 @@ scaleRoot (Step details) =
 
 pitch : Step -> Music.Pitch.Pitch
 pitch (Step details) =
-    ScaleStepper.currentPitch details.stepper
+    details.pitch
 
 
 setScaleType : Music.ScaleType.ScaleType -> Step -> Step
@@ -73,6 +83,6 @@ scale (Step details) =
     Music.Scale.custom details.scaleRoot details.scaleType
 
 
-step : Int -> Step -> Step
-step steps (Step details) =
-    Step { details | stepper = ScaleStepper.step steps details.stepper }
+setPitch : Music.Pitch.Pitch -> Step -> Step
+setPitch newPitch (Step details) =
+    Step { details | pitch = newPitch }
