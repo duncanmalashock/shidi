@@ -1,7 +1,9 @@
 module Id exposing (Id, id, match)
 
+import UUID
 
-id : Int -> Id
+
+id : UUID.UUID -> Id
 id value =
     Id value
 
@@ -12,4 +14,4 @@ match a b =
 
 
 type Id
-    = Id Int
+    = Id UUID.UUID

@@ -32,13 +32,13 @@ type alias Details =
     }
 
 
-init : Step
-init =
+init : Id.Id -> Step
+init id_ =
     Step
         { scaleRoot = Music.PitchClass.c
         , scaleType = Music.ScaleType.major
         , pitch = Music.Pitch.c4
-        , id = Id.id 0
+        , id = id_
         }
 
 

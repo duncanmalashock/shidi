@@ -7,13 +7,14 @@ import Html.Events
 import Id exposing (Id)
 import Keyboard
 import List.Extra
-import Music.Internal.Octave
 import Music.Internal.ScaleStepper as ScaleStepper
 import Music.Pitch
 import Music.PitchClass
 import Music.Scale
 import Music.ScaleType
+import Random
 import Step exposing (Step)
+import UUID
 
 
 main : Program () Model Msg
@@ -41,18 +42,26 @@ type Selection
     | SelectionPitch Id
 
 
-init : () -> ( Model, Cmd msg )
+init : () -> ( Model, Cmd Msg )
 init flags =
     ( initialModel
-    , Cmd.none
+    , newIdCmd NewStepCreated
     )
+
+
+newIdCmd : (Id -> Msg) -> Cmd Msg
+newIdCmd toMsg =
+    Random.generate
+        toMsg
+        (UUID.generator
+            |> Random.map (\uuid -> Id.id uuid)
+        )
 
 
 initialModel : Model
 initialModel =
     { steps =
-        [ Step.init
-        ]
+        []
     , pressedKeys = []
     , selection = Nothing
     , lastError = Nothing
@@ -66,6 +75,7 @@ type Msg
     | ScaleTypeClicked Id
     | PitchClicked Id
     | KeyMsg Keyboard.Msg
+    | NewStepCreated Id
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -145,6 +155,14 @@ update msg model =
 
                 Nothing ->
                     ( model, Cmd.none )
+
+        NewStepCreated id ->
+            ( { model
+                | steps =
+                    model.steps ++ [ Step.init id ]
+              }
+            , Cmd.none
+            )
 
 
 getStep : Id -> List Step -> Maybe Step
