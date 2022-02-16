@@ -77,6 +77,7 @@ type Msg
     | KeyMsg Keyboard.Msg
     | NewStepCreated Id
     | DeleteStepButtonClicked Id
+    | VoicingButtonClicked Id
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -172,6 +173,10 @@ update msg model =
             model
                 |> applyUserCommand (DeleteStep id)
 
+        VoicingButtonClicked id ->
+            model
+                |> applyUserCommand (GenerateVoicingForStep id)
+
 
 getStep : Id -> List Step -> Maybe Step
 getStep id steps =
@@ -214,6 +219,18 @@ updateStepScaleType scaleType selectedId steps =
         )
         (\step ->
             Step.setScaleType scaleType step
+        )
+        steps
+
+
+generateStepVoicing : Step -> List Step -> List Step
+generateStepVoicing stepToUpdate steps =
+    List.Extra.updateIf
+        (\step ->
+            Step.id step == Step.id stepToUpdate
+        )
+        (\step ->
+            Step.generateVoicing step
         )
         steps
 
@@ -267,6 +284,7 @@ type UserCommand
     | ChangeStepScaleRoot Int
     | CreateNewStep
     | DeleteStep Id
+    | GenerateVoicingForStep Id
 
 
 applyMaybeUserCommand : Maybe UserCommand -> Model -> ( Model, Cmd Msg )
@@ -352,6 +370,19 @@ applyUserCommand userCommand model =
             , Cmd.none
             )
 
+        GenerateVoicingForStep id ->
+            case getStep id model.steps of
+                Just step ->
+                    ( { model
+                        | steps =
+                            generateStepVoicing step model.steps
+                      }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    failWithError FailedToGenerateStepVoicing model
+
 
 failWithError : Error -> Model -> ( Model, Cmd Msg )
 failWithError error model =
@@ -364,6 +395,7 @@ type Error
     = FailedToChangeStepPitch
     | FailedToChangeStepScaleRoot
     | FailedToChangeStepScaleType
+    | FailedToGenerateStepVoicing
 
 
 view : Model -> { title : String, body : List (Html Msg) }
@@ -436,11 +468,19 @@ viewStep step maybeSelection =
                 [ Html.Events.onClick (DeleteStepButtonClicked stepId)
                 ]
                 [ Html.text "Delete" ]
+
+        viewVoicingButton : Html Msg
+        viewVoicingButton =
+            Html.button
+                [ Html.Events.onClick (VoicingButtonClicked stepId)
+                ]
+                [ Html.text "Voicing" ]
     in
     Html.div [] <|
         [ viewRoot
         , viewScaleType
         , viewPitches (Step.pitches step)
+        , viewVoicingButton
         , viewDeleteButton
         ]
 

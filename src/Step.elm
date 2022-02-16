@@ -94,4 +94,4 @@ setPitches newPitches (Step details) =
 
 generateVoicing : Step -> Step
 generateVoicing (Step details) =
-    Step details
+    Step { details | pitches = [] }
