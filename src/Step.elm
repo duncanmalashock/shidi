@@ -1,7 +1,9 @@
 module Step exposing
     ( Step, init
-    , id, pitch, scaleType, scaleRoot
-    , setPitch, setScaleType, setScaleRoot
+    , id, scaleType, scaleRoot
+    , setScaleType, setScaleRoot
+    , generateVoicing
+    , pitches, setPitches
     )
 
 {-|
@@ -10,6 +12,8 @@ module Step exposing
 
 @docs id, pitch, scaleType, scaleRoot
 @docs setPitch, setScaleType, setScaleRoot
+
+@docs generateVoicing
 
 -}
 
@@ -57,9 +61,9 @@ scaleRoot (Step details) =
     details.scaleRoot
 
 
-pitch : Step -> Maybe Music.Pitch.Pitch
-pitch (Step details) =
-    List.head details.pitches
+pitches : Step -> List Music.Pitch.Pitch
+pitches (Step details) =
+    details.pitches
 
 
 setScaleType : Music.ScaleType.ScaleType -> Step -> Step
@@ -83,6 +87,11 @@ scale (Step details) =
     Music.Scale.custom details.scaleRoot details.scaleType
 
 
-setPitch : Music.Pitch.Pitch -> Step -> Step
-setPitch newPitch (Step details) =
-    Step { details | pitches = [ newPitch ] }
+setPitches : List Music.Pitch.Pitch -> Step -> Step
+setPitches newPitches (Step details) =
+    Step { details | pitches = newPitches }
+
+
+generateVoicing : Step -> Step
+generateVoicing (Step details) =
+    Step details

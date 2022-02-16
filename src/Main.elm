@@ -146,7 +146,8 @@ update msg model =
                                 SelectionPitch id
                         , scaleStepper =
                             ScaleStepper.init
-                                (Step.pitch step
+                                (Step.pitches step
+                                    |> List.head
                                     |> Maybe.withDefault Music.Pitch.c4
                                 )
                                 (Music.Scale.custom (Step.scaleRoot step)
@@ -188,7 +189,7 @@ updateStepPitch id newPitch steps =
             Step.id step == id
         )
         (\step ->
-            Step.setPitch newPitch step
+            Step.setPitches [ newPitch ] step
         )
         steps
 
@@ -412,6 +413,11 @@ viewStep step maybeSelection =
                     )
                 ]
 
+        viewPitches : List Music.Pitch.Pitch -> Html Msg
+        viewPitches pitches =
+            Html.div []
+                (List.map viewPitch pitches)
+
         viewPitch : Music.Pitch.Pitch -> Html Msg
         viewPitch pitch =
             Html.button
@@ -432,12 +438,11 @@ viewStep step maybeSelection =
                 [ Html.text "Delete" ]
     in
     Html.div [] <|
-        List.filterMap identity
-            [ Just viewRoot
-            , Just viewScaleType
-            , Maybe.map viewPitch (Step.pitch step)
-            , Just viewDeleteButton
-            ]
+        [ viewRoot
+        , viewScaleType
+        , viewPitches (Step.pitches step)
+        , viewDeleteButton
+        ]
 
 
 subscriptions : Model -> Sub Msg
