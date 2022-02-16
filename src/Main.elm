@@ -76,6 +76,7 @@ type Msg
     | PitchClicked Id
     | KeyMsg Keyboard.Msg
     | NewStepCreated Id
+    | DeleteStepButtonClicked Id
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -164,6 +165,10 @@ update msg model =
             , Cmd.none
             )
 
+        DeleteStepButtonClicked id ->
+            model
+                |> applyUserCommand (DeleteStep id)
+
 
 getStep : Id -> List Step -> Maybe Step
 getStep id steps =
@@ -243,6 +248,9 @@ handleKeyEvent maybeKeyChange model =
                         _ ->
                             Nothing
 
+                Keyboard.KeyDown (Keyboard.Character "n") ->
+                    Just CreateNewStep
+
                 _ ->
                     Nothing
 
@@ -254,6 +262,8 @@ type UserCommand
     = ChangeStepPitch Int
     | ChangeStepScaleType Music.ScaleType.ScaleType
     | ChangeStepScaleRoot Int
+    | CreateNewStep
+    | DeleteStep Id
 
 
 applyMaybeUserCommand : Maybe UserCommand -> Model -> ( Model, Cmd Msg )
@@ -323,6 +333,21 @@ applyUserCommand userCommand model =
 
                 _ ->
                     failWithError FailedToChangeStepScaleRoot model
+
+        CreateNewStep ->
+            ( model, newIdCmd NewStepCreated )
+
+        DeleteStep id ->
+            ( { model
+                | steps =
+                    List.filter
+                        (\step ->
+                            Step.id step /= id
+                        )
+                        model.steps
+              }
+            , Cmd.none
+            )
 
 
 failWithError : Error -> Model -> ( Model, Cmd Msg )
@@ -396,11 +421,19 @@ viewStep step maybeSelection =
                     Html.Attributes.style "color" "black"
                 ]
                 [ Html.text (Music.Pitch.toString (Step.pitch step)) ]
+
+        viewDeleteButton : Html Msg
+        viewDeleteButton =
+            Html.button
+                [ Html.Events.onClick (DeleteStepButtonClicked stepId)
+                ]
+                [ Html.text "Delete" ]
     in
     Html.div []
         [ viewRoot
         , viewScaleType
         , viewPitch
+        , viewDeleteButton
         ]
 
 
