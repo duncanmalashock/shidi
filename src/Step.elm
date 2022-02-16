@@ -27,7 +27,7 @@ type Step
 type alias Details =
     { scaleRoot : Music.PitchClass.PitchClass
     , scaleType : Music.ScaleType.ScaleType
-    , pitch : Music.Pitch.Pitch
+    , pitches : List Music.Pitch.Pitch
     , id : Id.Id
     }
 
@@ -37,7 +37,7 @@ init id_ =
     Step
         { scaleRoot = Music.PitchClass.c
         , scaleType = Music.ScaleType.major
-        , pitch = Music.Pitch.c4
+        , pitches = [ Music.Pitch.c4 ]
         , id = id_
         }
 
@@ -57,9 +57,9 @@ scaleRoot (Step details) =
     details.scaleRoot
 
 
-pitch : Step -> Music.Pitch.Pitch
+pitch : Step -> Maybe Music.Pitch.Pitch
 pitch (Step details) =
-    details.pitch
+    List.head details.pitches
 
 
 setScaleType : Music.ScaleType.ScaleType -> Step -> Step
@@ -85,4 +85,4 @@ scale (Step details) =
 
 setPitch : Music.Pitch.Pitch -> Step -> Step
 setPitch newPitch (Step details) =
-    Step { details | pitch = newPitch }
+    Step { details | pitches = [ newPitch ] }

@@ -146,7 +146,9 @@ update msg model =
                                 SelectionPitch id
                         , scaleStepper =
                             ScaleStepper.init
-                                (Step.pitch step)
+                                (Step.pitch step
+                                    |> Maybe.withDefault Music.Pitch.c4
+                                )
                                 (Music.Scale.custom (Step.scaleRoot step)
                                     (Step.scaleType step)
                                 )
@@ -410,8 +412,8 @@ viewStep step maybeSelection =
                     )
                 ]
 
-        viewPitch : Html Msg
-        viewPitch =
+        viewPitch : Music.Pitch.Pitch -> Html Msg
+        viewPitch pitch =
             Html.button
                 [ Html.Events.onClick (PitchClicked stepId)
                 , if maybeSelection == Just (SelectionPitch stepId) then
@@ -420,7 +422,7 @@ viewStep step maybeSelection =
                   else
                     Html.Attributes.style "color" "black"
                 ]
-                [ Html.text (Music.Pitch.toString (Step.pitch step)) ]
+                [ Html.text (Music.Pitch.toString pitch) ]
 
         viewDeleteButton : Html Msg
         viewDeleteButton =
@@ -429,12 +431,13 @@ viewStep step maybeSelection =
                 ]
                 [ Html.text "Delete" ]
     in
-    Html.div []
-        [ viewRoot
-        , viewScaleType
-        , viewPitch
-        , viewDeleteButton
-        ]
+    Html.div [] <|
+        List.filterMap identity
+            [ Just viewRoot
+            , Just viewScaleType
+            , Maybe.map viewPitch (Step.pitch step)
+            , Just viewDeleteButton
+            ]
 
 
 subscriptions : Model -> Sub Msg
