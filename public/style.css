@@ -1,0 +1,18 @@
+body {
+    margin: 0;
+    background: #444;
+}
+
+.piano {
+    display: block;
+}
+
+.piano__key:hover {
+    fill: yellow;
+    cursor: pointer;
+}
+
+.piano__text {
+    font: bold 30px sans-serif;
+    pointer-events: none;
+}

@@ -12,6 +12,8 @@ import Music.Pitch
 import Music.PitchClass
 import Music.Scale
 import Music.ScaleType
+import Piano
+import Ports
 import Random
 import Step exposing (Step)
 import UUID
@@ -78,6 +80,7 @@ type Msg
     | NewStepCreated Id
     | DeleteStepButtonClicked Id
     | VoicingButtonClicked Id
+    | NoteClicked Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -176,6 +179,9 @@ update msg model =
         VoicingButtonClicked id ->
             model
                 |> applyUserCommand (GenerateVoicingForStep id)
+
+        NoteClicked noteNumber ->
+            ( model, Ports.playNote noteNumber )
 
 
 getStep : Id -> List Step -> Maybe Step
@@ -402,12 +408,16 @@ view : Model -> { title : String, body : List (Html Msg) }
 view model =
     { title = "App"
     , body =
-        List.map
-            (\step ->
-                viewStep step model.selection
-            )
-            model.steps
+        [ viewPiano ]
     }
+
+
+viewPiano : Html Msg
+viewPiano =
+    List.range 0 9
+        |> List.reverse
+        |> List.map (Piano.viewOctave Piano.zoomDefault NoteClicked)
+        |> Html.div []
 
 
 viewStep : Step -> Maybe Selection -> Html Msg
