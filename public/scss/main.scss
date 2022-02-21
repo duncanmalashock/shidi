@@ -3,6 +3,16 @@ body {
     background: #444;
 }
 
+/* Layout */
+.row { display: flex ;}
+
+/* Piano roll */
+.piano-roll {
+    background: pink;
+    flex: 1 1 auto;
+}
+
+/* Piano */
 .piano {
     display: block;
 }
@@ -13,6 +23,6 @@ body {
 }
 
 .piano__text {
-    font: bold 30px sans-serif;
+    font: bold 20px sans-serif;
     pointer-events: none;
 }

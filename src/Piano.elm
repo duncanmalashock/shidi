@@ -1,48 +1,17 @@
-module Piano exposing (viewOctave, zoomDefault)
+module Piano exposing (viewOctave)
 
 import Svg
 import Svg.Attributes as Attr
 import Svg.Events as Event
 
 
-type Zoom
-    = ZoomXXS
-    | ZoomXS
-    | ZoomS
-    | ZoomM
-    | ZoomL
-    | ZoomXL
-    | ZoomXXL
+keysInOctave : Int
+keysInOctave =
+    12
 
 
-zoomDefault : Zoom
-zoomDefault =
-    ZoomL
-
-
-whiteKeyHeight : Zoom -> Int
-whiteKeyHeight zoom =
-    case zoom of
-        ZoomXXS ->
-            45
-
-        ZoomXS ->
-            50
-
-        ZoomS ->
-            55
-
-        ZoomM ->
-            65
-
-        ZoomL ->
-            80
-
-        ZoomXL ->
-            110
-
-        ZoomXXL ->
-            160
+whiteKeyHeight =
+    octaveHeight // whiteKeysInOctave
 
 
 whiteKeyWidth : Int
@@ -50,9 +19,9 @@ whiteKeyWidth =
     120
 
 
-blackKeyHeight : Zoom -> Int
-blackKeyHeight zoom =
-    (whiteKeyHeight zoom * 2) // 3
+blackKeyHeight : Int
+blackKeyHeight =
+    21
 
 
 blackKeyWidth : Int
@@ -60,15 +29,35 @@ blackKeyWidth =
     66
 
 
-viewOctave : Zoom -> (Int -> msg) -> Int -> Svg.Svg msg
-viewOctave zoom onNoteClicked octave =
+octaveHeight : Int
+octaveHeight =
+    keysInOctave * blackKeyHeight
+
+
+whiteKeysInOctave : Int
+whiteKeysInOctave =
+    7
+
+
+cKeyLabelRightOffset : Int
+cKeyLabelRightOffset =
+    36
+
+
+cKeyLabelBottomOffset : Int
+cKeyLabelBottomOffset =
+    11
+
+
+viewOctave : (Int -> msg) -> Int -> Svg.Svg msg
+viewOctave onNoteClicked octave =
     let
         viewBoxAttr : String
         viewBoxAttr =
             [ 0
             , 0
             , whiteKeyWidth
-            , octaveHeight zoom
+            , octaveHeight
             ]
                 |> List.map String.fromInt
                 |> String.join " "
@@ -78,91 +67,62 @@ viewOctave zoom onNoteClicked octave =
     in
     Svg.svg
         [ Attr.viewBox viewBoxAttr
-        , Attr.width "35"
+        , Attr.width "120"
         , Attr.class "piano"
         ]
         [ Svg.g []
-            ([ ( 0, 11 )
-             , ( 1, 9 )
-             , ( 2, 7 )
-             , ( 3, 5 )
-             , ( 4, 4 )
-             , ( 5, 2 )
-             , ( 6, 0 )
-             ]
-                |> List.map
-                    (\( heightIndex, noteNumber ) ->
-                        viewWhiteKey zoom
+            ([ 11, 9, 7, 5, 4, 2, 0 ]
+                |> List.indexedMap
+                    (\heightIndex noteNumber ->
+                        viewWhiteKey
                             (onNoteClicked (noteNumber + semitoneOffset))
                             heightIndex
                     )
             )
         , Svg.g []
-            ([ ( 0, 10 )
-             , ( 1, 8 )
-             , ( 2, 6 )
-             ]
-                |> List.map
-                    (\( heightIndex, noteNumber ) ->
-                        viewBlackKey zoom
+            ([ 10, 8, 6 ]
+                |> List.indexedMap
+                    (\heightIndex noteNumber ->
+                        viewBlackKey
                             (onNoteClicked (noteNumber + semitoneOffset))
                             heightIndex
-                            1
+                            0
+                            blackKeyHeight
                     )
             )
         , Svg.g []
-            ([ ( 0, 3 )
-             , ( 1, 1 )
-             ]
-                |> List.map
-                    (\( heightIndex, noteNumber ) ->
-                        viewBlackKey zoom
+            ([ 3, 1 ]
+                |> List.indexedMap
+                    (\heightIndex noteNumber ->
+                        viewBlackKey
                             (onNoteClicked (noteNumber + semitoneOffset))
                             heightIndex
-                            5
+                            4
+                            0
                     )
             )
-        , viewCKeyLabel zoom octave
+        , viewCKeyLabel octave
         ]
 
 
-viewCKeyLabel : Zoom -> Int -> Svg.Svg msg
-viewCKeyLabel zoom octave =
-    let
-        cKeyLabelRightOffset : Int
-        cKeyLabelRightOffset =
-            46
-
-        cKeyLabelBottomOffset : Int
-        cKeyLabelBottomOffset =
-            12
-    in
+viewCKeyLabel : Int -> Svg.Svg msg
+viewCKeyLabel octave =
     Svg.text_
         [ Attr.x <| String.fromInt (whiteKeyWidth - cKeyLabelRightOffset)
-        , Attr.y <| String.fromInt (octaveHeight zoom - cKeyLabelBottomOffset)
+        , Attr.y <| String.fromInt (octaveHeight - cKeyLabelBottomOffset)
         , Attr.fill "black"
         , Attr.class "piano__text"
         ]
         [ Svg.text <| "C" ++ String.fromInt octave ]
 
 
-octaveHeight : Zoom -> Int
-octaveHeight zoom =
-    whiteKeyHeight zoom * whiteKeysInOctave
-
-
-whiteKeysInOctave : Int
-whiteKeysInOctave =
-    7
-
-
-viewWhiteKey : Zoom -> msg -> Int -> Svg.Svg msg
-viewWhiteKey zoom onNoteClicked index =
+viewWhiteKey : msg -> Int -> Svg.Svg msg
+viewWhiteKey onNoteClicked index =
     let
         yValue : String
         yValue =
             index
-                * whiteKeyHeight zoom
+                * whiteKeyHeight
                 |> String.fromInt
     in
     Svg.rect
@@ -170,7 +130,7 @@ viewWhiteKey zoom onNoteClicked index =
         , Attr.x "0"
         , Attr.y yValue
         , Attr.width (String.fromInt whiteKeyWidth)
-        , Attr.height (String.fromInt (whiteKeyHeight zoom))
+        , Attr.height (String.fromInt whiteKeyHeight)
         , Attr.stroke "black"
         , Attr.strokeWidth "3"
         , Attr.class "piano__key piano__key--white"
@@ -179,14 +139,14 @@ viewWhiteKey zoom onNoteClicked index =
         []
 
 
-viewBlackKey : Zoom -> msg -> Int -> Int -> Svg.Svg msg
-viewBlackKey zoom onNoteClicked baseOffset index =
+viewBlackKey : msg -> Int -> Int -> Int -> Svg.Svg msg
+viewBlackKey onNoteClicked baseOffset index otherOffset =
     let
         yValue : String
         yValue =
             (index + baseOffset)
-                * whiteKeyHeight zoom
-                - (blackKeyHeight zoom // 2)
+                * (blackKeyHeight * 2)
+                + otherOffset
                 |> String.fromInt
     in
     Svg.rect
@@ -194,7 +154,7 @@ viewBlackKey zoom onNoteClicked baseOffset index =
         , Attr.x "0"
         , Attr.y yValue
         , Attr.width (String.fromInt blackKeyWidth)
-        , Attr.height (String.fromInt (blackKeyHeight zoom))
+        , Attr.height (String.fromInt blackKeyHeight)
         , Attr.stroke "black"
         , Attr.strokeWidth "3"
         , Attr.class "piano__key piano__key--black"

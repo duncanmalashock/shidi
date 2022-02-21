@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "require": "^2.4.20",
+    "sass": "^1.49.8",
     "vite": "^2.8.4",
     "vite-plugin-elm": "^2.5.1",
     "webmidi": "^3.0.15"

@@ -2,7 +2,7 @@ module Main exposing (main)
 
 import Browser
 import Html exposing (Html)
-import Html.Attributes
+import Html.Attributes as Attr
 import Html.Events
 import Id exposing (Id)
 import Keyboard
@@ -13,6 +13,7 @@ import Music.PitchClass
 import Music.Scale
 import Music.ScaleType
 import Piano
+import PianoRoll
 import Ports
 import Random
 import Step exposing (Step)
@@ -408,7 +409,11 @@ view : Model -> { title : String, body : List (Html Msg) }
 view model =
     { title = "App"
     , body =
-        [ viewPiano ]
+        [ Html.div [ Attr.class "row" ]
+            [ viewPiano
+            , PianoRoll.view
+            ]
+        ]
     }
 
 
@@ -416,83 +421,8 @@ viewPiano : Html Msg
 viewPiano =
     List.range 0 9
         |> List.reverse
-        |> List.map (Piano.viewOctave Piano.zoomDefault NoteClicked)
+        |> List.map (Piano.viewOctave NoteClicked)
         |> Html.div []
-
-
-viewStep : Step -> Maybe Selection -> Html Msg
-viewStep step maybeSelection =
-    let
-        stepId =
-            Step.id step
-
-        viewRoot : Html Msg
-        viewRoot =
-            Html.button
-                [ Html.Events.onClick (ScaleRootClicked stepId)
-                , if maybeSelection == Just (SelectionScaleRoot stepId) then
-                    Html.Attributes.style "color" "red"
-
-                  else
-                    Html.Attributes.style "color" "black"
-                ]
-                [ Html.text (Music.PitchClass.toString (Step.scaleRoot step))
-                ]
-
-        viewScaleType : Html Msg
-        viewScaleType =
-            Html.button
-                [ Html.Events.onClick (ScaleTypeClicked stepId)
-                , if maybeSelection == Just (SelectionScaleType stepId) then
-                    Html.Attributes.style "color" "red"
-
-                  else
-                    Html.Attributes.style "color" "black"
-                ]
-                [ Html.text
-                    (Music.ScaleType.name (Step.scaleType step)
-                        |> Maybe.withDefault ""
-                    )
-                ]
-
-        viewPitches : List Music.Pitch.Pitch -> Html Msg
-        viewPitches pitches =
-            Html.div []
-                (List.map viewPitch pitches)
-
-        viewPitch : Music.Pitch.Pitch -> Html Msg
-        viewPitch pitch =
-            Html.button
-                [ Html.Events.onClick (PitchClicked stepId)
-                , if maybeSelection == Just (SelectionPitch stepId) then
-                    Html.Attributes.style "color" "red"
-
-                  else
-                    Html.Attributes.style "color" "black"
-                ]
-                [ Html.text (Music.Pitch.toString pitch) ]
-
-        viewDeleteButton : Html Msg
-        viewDeleteButton =
-            Html.button
-                [ Html.Events.onClick (DeleteStepButtonClicked stepId)
-                ]
-                [ Html.text "Delete" ]
-
-        viewVoicingButton : Html Msg
-        viewVoicingButton =
-            Html.button
-                [ Html.Events.onClick (VoicingButtonClicked stepId)
-                ]
-                [ Html.text "Voicing" ]
-    in
-    Html.div [] <|
-        [ viewRoot
-        , viewScaleType
-        , viewPitches (Step.pitches step)
-        , viewVoicingButton
-        , viewDeleteButton
-        ]
 
 
 subscriptions : Model -> Sub Msg
