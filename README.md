@@ -2,7 +2,7 @@
 
 ### local development
 
-Make sure you have the latest version of [Node.js] installed.
+Make sure you have the latest version of [Node.js](https://nodejs.org/en/) installed.
 
 ```bash
 npm install
