@@ -1,13 +1,15 @@
 import Midi from './midi.js'
 
+const handlers = {
+  playNote: (data) => Midi.playNote(data)
+}
+
 const init = (app) => {
   app.ports.outgoing.subscribe(({ tag, data }) => {
-    switch (tag) {
-      case 'playNote':
-        return Midi.playNote(data)
-      default:
-        return console.warn(`Unrecognized Port`, tag)
-    }
+    let fn = handlers[tag]
+    return fn
+      ? fn(data)
+      : console.warn(`Unrecognized Port`, tag)
   })
 }
 
