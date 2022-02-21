@@ -36,6 +36,7 @@ type alias Model =
     , scaleStepper : ScaleStepper.ScaleStepper
     , pressedKeys : List Keyboard.Key
     , lastError : Maybe Error
+    , mousePosition : Maybe { x : Int, y : Int }
     }
 
 
@@ -70,6 +71,7 @@ initialModel =
     , lastError = Nothing
     , scaleStepper =
         ScaleStepper.init Music.Pitch.c4 (Music.Scale.major Music.PitchClass.c)
+    , mousePosition = Nothing
     }
 
 
@@ -82,6 +84,8 @@ type Msg
     | DeleteStepButtonClicked Id
     | VoicingButtonClicked Id
     | NoteClicked Int
+    | MouseMovedOverGrid { x : Int, y : Int }
+    | MouseLeftGrid
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -183,6 +187,16 @@ update msg model =
 
         NoteClicked noteNumber ->
             ( model, Ports.playNote noteNumber )
+
+        MouseMovedOverGrid position ->
+            ( { model | mousePosition = Just position }
+            , Cmd.none
+            )
+
+        MouseLeftGrid ->
+            ( { model | mousePosition = Nothing }
+            , Cmd.none
+            )
 
 
 getStep : Id -> List Step -> Maybe Step
@@ -411,7 +425,38 @@ view model =
     , body =
         [ Html.div [ Attr.class "row" ]
             [ viewPiano
-            , PianoRoll.view
+            , Html.div
+                [ Attr.class "piano-roll__wrapper" ]
+                [ PianoRoll.view
+                    { onMouseMove = MouseMovedOverGrid
+                    , onMouseLeave = MouseLeftGrid
+                    }
+                , case model.mousePosition of
+                    Just position ->
+                        let
+                            x =
+                                position.x
+                                    // 21
+                                    * 21
+
+                            y =
+                                position.y
+                                    // 21
+                                    * 21
+                        in
+                        Html.div
+                            [ Attr.class "note-preview"
+                            , Attr.style "transform"
+                                ("translate($x, $y)"
+                                    |> String.replace "$x" (String.fromInt x ++ "px")
+                                    |> String.replace "$y" (String.fromInt y ++ "px")
+                                )
+                            ]
+                            []
+
+                    Nothing ->
+                        Html.text ""
+                ]
             ]
         ]
     }

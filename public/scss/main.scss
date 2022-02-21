@@ -8,8 +8,25 @@ body {
 
 /* Piano roll */
 .piano-roll {
-    background: pink;
+    cursor: none;
     flex: 1 1 auto;
+}
+
+.piano-roll__wrapper {
+    display: flex;
+    flex: 1 1 auto;
+    position: relative;
+}
+
+.note-preview {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 21px;
+    height: 21px;
+    border-radius: 4px;
+    background: mediumseagreen;
+    pointer-events: none;
 }
 
 /* Piano */
