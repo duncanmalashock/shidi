@@ -35,13 +35,14 @@ backgroundImageAttr options =
     gridBackground
         |> String.replace "$keys" (PianoRoll.Key.view options.height)
         |> String.replace "$verticalLines"
-            (List.range 0 3
+            (List.range 0 4
                 |> List.map (viewVerticalLine options.height)
                 |> String.join ""
             )
         |> String.replace "$totalHeight" (String.fromInt (12 * options.height))
         |> String.replace "$midSplit" (String.fromInt (7 * options.height))
-        |> String.replace "$lineColor" "#fff6"
+        |> String.replace "$verticalLineColor" "#fff5"
+        |> String.replace "$horizontalLineColor" "#fff2"
         |> String.replace "$width" (String.fromInt (4 * options.height))
         |> String.replace "\n" ""
         |> String.replace "#" "%23"
@@ -55,7 +56,7 @@ wrapInUrl input =
 
 viewVerticalLine : Int -> Int -> String
 viewVerticalLine height index =
-    """<line x1="$x" y1="0" x2="$x" y2="$totalHeight" stroke="$lineColor" />"""
+    """<line x1="$x" y1="0" x2="$x" y2="$totalHeight" stroke="$verticalLineColor" />"""
         |> String.replace "$x" (String.fromInt (height * index))
         |> String.replace "$totalHeight" (String.fromInt (12 * height))
 
@@ -69,8 +70,9 @@ gridBackground =
   </g>
   <g class="piano-roll__lines">
     $verticalLines
-    <line x1="0" y1="0" x2="$width" y2="0" stroke="$lineColor" />
-    <line x1="0" y1="$midSplit" x2="100" y2="$midSplit" stroke="$lineColor" />
+    <line x1="0" y1="0" x2="$width" y2="0" stroke="$horizontalLineColor" />
+    <line x1="0" y1="$midSplit" x2="$width" y2="$midSplit" stroke="$horizontalLineColor" />
+    <line x1="0" y1="$totalHeight" x2="$width" y2="$totalHeight" stroke="$horizontalLineColor" />
   </g>
 </svg>
     """
