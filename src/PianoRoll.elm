@@ -1,5 +1,6 @@
 module PianoRoll exposing (..)
 
+import Coordinate
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events
@@ -8,24 +9,52 @@ import PianoRoll.Key
 
 
 view :
-    { onMouseMove : { x : Int, y : Int } -> msg
+    { onMouseMove : Coordinate.Pixels -> msg
     , onMouseLeave : msg
+    , onLeftClick : Coordinate.Pixels -> msg
+    , onRightClick : Coordinate.Pixels -> msg
     }
     -> Html msg
 view options =
     Html.div
         [ Attr.class "piano-roll"
         , Attr.style "background-image" (backgroundImageAttr { height = 21 })
-        , Html.Events.on "mousemove" (mouseMoveDecoder options.onMouseMove)
+        , Html.Events.on "mousemove" (offsetDecoder |> Json.Decode.map options.onMouseMove)
+        , onMouseUp
+            { onLeftClick = options.onLeftClick
+            , onRightClick = options.onRightClick
+            }
         , Html.Events.onMouseLeave options.onMouseLeave
         ]
         []
 
 
-mouseMoveDecoder : ({ x : Int, y : Int } -> msg) -> Json.Decode.Decoder msg
-mouseMoveDecoder onMouseMove =
+onMouseUp :
+    { onLeftClick : Coordinate.Pixels -> msg
+    , onRightClick : Coordinate.Pixels -> msg
+    }
+    -> Html.Attribute msg
+onMouseUp { onLeftClick, onRightClick } =
+    Html.Events.on "mouseup"
+        (Json.Decode.andThen
+            (\mouseButton ->
+                if mouseButton == 0 then
+                    offsetDecoder |> Json.Decode.map onLeftClick
+
+                else if mouseButton == 2 then
+                    offsetDecoder |> Json.Decode.map onRightClick
+
+                else
+                    Json.Decode.fail "bad witch club 🧙\u{200D}♀️"
+            )
+            (Json.Decode.field "button" Json.Decode.int)
+        )
+
+
+offsetDecoder : Json.Decode.Decoder Coordinate.Pixels
+offsetDecoder =
     Json.Decode.map2
-        (\x y -> onMouseMove { x = x, y = y })
+        Coordinate.pixels
         (Json.Decode.field "offsetX" Json.Decode.int)
         (Json.Decode.field "offsetY" Json.Decode.int)
 

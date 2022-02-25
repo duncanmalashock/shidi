@@ -1,6 +1,8 @@
 module Main exposing (main)
 
+import AssocSet as Set
 import Browser
+import Coordinate
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Piano
@@ -18,7 +20,8 @@ main =
 
 
 type alias Model =
-    { mousePosition : Maybe { x : Int, y : Int }
+    { mousePosition : Maybe Coordinate.Pixels
+    , notes : Set.Set Coordinate.GridCells
     }
 
 
@@ -32,13 +35,16 @@ init flags =
 initialModel : Model
 initialModel =
     { mousePosition = Nothing
+    , notes = Set.empty
     }
 
 
 type Msg
-    = MouseMovedOverGrid { x : Int, y : Int }
+    = MouseMovedOverGrid Coordinate.Pixels
     | MouseLeftGrid
-    | NoteClicked Int
+    | PianoNoteClicked Int
+    | NoteAdded Coordinate.Pixels
+    | NoteRemoved Coordinate.Pixels
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -54,8 +60,28 @@ update msg model =
             , Cmd.none
             )
 
-        NoteClicked int ->
+        PianoNoteClicked int ->
             ( model, Cmd.none )
+
+        NoteAdded coordinate ->
+            ( { model
+                | notes =
+                    Set.insert
+                        (Coordinate.fromPixelsToGridCells coordinate)
+                        model.notes
+              }
+            , Cmd.none
+            )
+
+        NoteRemoved coordinate ->
+            ( { model
+                | notes =
+                    Set.remove
+                        (Coordinate.fromPixelsToGridCells coordinate)
+                        model.notes
+              }
+            , Cmd.none
+            )
 
 
 view : Model -> { title : String, body : List (Html Msg) }
@@ -69,29 +95,14 @@ view model =
                 [ PianoRoll.view
                     { onMouseMove = MouseMovedOverGrid
                     , onMouseLeave = MouseLeftGrid
+                    , onLeftClick = NoteAdded
+                    , onRightClick = NoteRemoved
                     }
+                , viewNotes model.notes
                 , case model.mousePosition of
-                    Just position ->
-                        let
-                            x =
-                                position.x
-                                    // 21
-                                    * 21
-
-                            y =
-                                position.y
-                                    // 21
-                                    * 21
-                        in
-                        Html.div
-                            [ Attr.class "note-preview"
-                            , Attr.style "transform"
-                                ("translate($x, $y)"
-                                    |> String.replace "$x" (String.fromInt x ++ "px")
-                                    |> String.replace "$y" (String.fromInt y ++ "px")
-                                )
-                            ]
-                            []
+                    Just coordinate ->
+                        viewNote "mediumseagreen"
+                            (Coordinate.fromPixelsToGridCells coordinate)
 
                     Nothing ->
                         Html.text ""
@@ -101,11 +112,37 @@ view model =
     }
 
 
+viewNotes : Set.Set Coordinate.GridCells -> Html Msg
+viewNotes coordinateSet =
+    Set.toList coordinateSet
+        |> List.map (viewNote "deeppink")
+        |> Html.div []
+
+
+viewNote : String -> Coordinate.GridCells -> Html Msg
+viewNote color coordinate =
+    let
+        { x, y } =
+            Coordinate.fromGridCellsToPixels coordinate
+                |> Coordinate.toPixelsRecord
+    in
+    Html.div
+        [ Attr.class "note-preview"
+        , Attr.style "background" color
+        , Attr.style "transform"
+            ("translate($x, $y)"
+                |> String.replace "$x" (String.fromInt x ++ "px")
+                |> String.replace "$y" (String.fromInt y ++ "px")
+            )
+        ]
+        []
+
+
 viewPiano : Html Msg
 viewPiano =
     List.range 0 9
         |> List.reverse
-        |> List.map (Piano.viewOctave NoteClicked)
+        |> List.map (Piano.viewOctave PianoNoteClicked)
         |> Html.div []
 
 

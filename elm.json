@@ -14,6 +14,7 @@
             "elm/random": "1.0.0",
             "elm/svg": "1.0.1",
             "elm-community/list-extra": "8.5.2",
+            "erlandsona/assoc-set": "1.1.0",
             "ohanhi/keyboard": "2.0.1",
             "pzp1997/assoc-list": "1.0.0"
         },
