@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "elm": "^0.19.1-5",
     "require": "^2.4.20",
     "sass": "^1.49.8",
     "vite": "^2.8.4",
