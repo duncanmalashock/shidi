@@ -1,4 +1,3 @@
-import Midi from './midi.js'
 import Audio from './audio.js'
 
 const handlers = {
