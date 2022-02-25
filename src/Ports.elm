@@ -1,4 +1,4 @@
-port module Ports exposing (playNote)
+port module Ports exposing (playNote, playSong)
 
 import Json.Encode
 
@@ -15,4 +15,12 @@ playNote noteNumber =
     outgoing
         { tag = "playNote"
         , data = Json.Encode.int noteNumber
+        }
+
+
+playSong : Json.Encode.Value -> Cmd msg
+playSong notes =
+    outgoing
+        { tag = "playSong"
+        , data = notes
         }

@@ -1,5 +1,6 @@
-module Piano exposing (viewOctave)
+module Piano exposing (view)
 
+import Html exposing (Html)
 import Svg
 import Svg.Attributes as Attr
 import Svg.Events as Event
@@ -49,6 +50,14 @@ cKeyLabelBottomOffset =
     11
 
 
+view : (Int -> msg) -> Html msg
+view onClick =
+    List.range 0 9
+        |> List.reverse
+        |> List.map (viewOctave onClick)
+        |> Html.div []
+
+
 viewOctave : (Int -> msg) -> Int -> Svg.Svg msg
 viewOctave onNoteClicked octave =
     let
@@ -63,7 +72,7 @@ viewOctave onNoteClicked octave =
                 |> String.join " "
 
         semitoneOffset =
-            octave * 12
+            (octave + 1) * 12
     in
     Svg.svg
         [ Attr.viewBox viewBoxAttr

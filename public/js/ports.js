@@ -1,11 +1,13 @@
 import Midi from './midi.js'
+import Audio from './audio.js'
 
 const handlers = {
-  playNote: (data) => Midi.playNote(data)
+  playNote: (data) => Audio.play([{midi: data, index: 0}]),
+  playSong: (notes) => Audio.play(notes)
 }
 
 const init = (app) => {
-  app.ports.outgoing.subscribe(({ tag, data }) => {
+  app.ports && app.ports.outgoing && app.ports.outgoing.subscribe(({ tag, data }) => {
     let fn = handlers[tag]
     return fn
       ? fn(data)

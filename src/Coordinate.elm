@@ -1,7 +1,7 @@
 module Coordinate exposing
     ( GridCells, gridCells
     , Pixels, pixels
-    , toPixelsRecord
+    , toPixelsRecord, toGridCellsRecord
     , roundToNearestScreenCell
     , fromPixelsToGridCells, fromGridCellsToPixels
     )
@@ -11,7 +11,7 @@ module Coordinate exposing
 @docs GridCells, gridCells
 @docs Pixels, pixels
 
-@docs toPixelsRecord
+@docs toPixelsRecord, toGridCellsRecord
 
 @docs roundToNearestScreenCell
 
@@ -45,11 +45,21 @@ new x y =
     Coordinate ( x, y )
 
 
-toPixelsRecord : Coordinate InPixels -> { x : Int, y : Int }
-toPixelsRecord (Coordinate ( x, y )) =
+toRecord : Coordinate any -> { x : Int, y : Int }
+toRecord (Coordinate ( x, y )) =
     { x = x
     , y = y
     }
+
+
+toPixelsRecord : Pixels -> { x : Int, y : Int }
+toPixelsRecord =
+    toRecord
+
+
+toGridCellsRecord : GridCells -> { x : Int, y : Int }
+toGridCellsRecord =
+    toRecord
 
 
 pixels : Int -> Int -> Coordinate InPixels

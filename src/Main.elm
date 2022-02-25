@@ -5,8 +5,11 @@ import Browser
 import Coordinate
 import Html exposing (Html)
 import Html.Attributes as Attr
+import Html.Events
+import Json.Encode
 import Piano
 import PianoRoll
+import Ports
 
 
 main : Program () Model Msg
@@ -45,6 +48,7 @@ type Msg
     | PianoNoteClicked Int
     | NoteAdded Coordinate.Pixels
     | NoteRemoved Coordinate.Pixels
+    | PlaySong
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -60,8 +64,8 @@ update msg model =
             , Cmd.none
             )
 
-        PianoNoteClicked int ->
-            ( model, Cmd.none )
+        PianoNoteClicked note ->
+            ( model, Ports.playNote note )
 
         NoteAdded coordinate ->
             ( { model
@@ -83,13 +87,38 @@ update msg model =
             , Cmd.none
             )
 
+        PlaySong ->
+            ( model, Ports.playSong (notesToJson model.notes) )
+
+
+notesToJson : Set.Set Coordinate.GridCells -> Json.Encode.Value
+notesToJson notes =
+    Json.Encode.list noteToJson (Set.toList notes)
+
+
+noteToJson : Coordinate.GridCells -> Json.Encode.Value
+noteToJson note =
+    let
+        { x, y } =
+            Coordinate.toGridCellsRecord note
+    in
+    Json.Encode.object
+        [ ( "midi", Json.Encode.int (fromGridRowIndexToMidiNote y) )
+        , ( "index", Json.Encode.int x )
+        ]
+
+
+fromGridRowIndexToMidiNote : Int -> Int
+fromGridRowIndexToMidiNote input =
+    131 - input
+
 
 view : Model -> { title : String, body : List (Html Msg) }
 view model =
     { title = "App"
     , body =
         [ Html.div [ Attr.class "row" ]
-            [ viewPiano
+            [ Piano.view PianoNoteClicked
             , Html.div
                 [ Attr.class "piano-roll__wrapper" ]
                 [ PianoRoll.view
@@ -106,10 +135,20 @@ view model =
 
                     Nothing ->
                         Html.text ""
+                , viewPlayButton
                 ]
             ]
         ]
     }
+
+
+viewPlayButton : Html Msg
+viewPlayButton =
+    Html.button
+        [ Attr.class "play-button"
+        , Html.Events.onClick PlaySong
+        ]
+        [ Html.text "Play" ]
 
 
 viewNotes : Set.Set Coordinate.GridCells -> Html Msg
@@ -136,14 +175,6 @@ viewNote color coordinate =
             )
         ]
         []
-
-
-viewPiano : Html Msg
-viewPiano =
-    List.range 0 9
-        |> List.reverse
-        |> List.map (Piano.viewOctave PianoNoteClicked)
-        |> Html.div []
 
 
 subscriptions : Model -> Sub Msg
