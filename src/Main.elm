@@ -68,13 +68,20 @@ update msg model =
             ( model, Ports.playNote note )
 
         NoteAdded coordinate ->
+            let
+                newNote =
+                    Coordinate.fromPixelsToGridCells coordinate
+
+                gridRowIndex =
+                    Coordinate.toGridCellsRecord newNote
+            in
             ( { model
                 | notes =
                     Set.insert
-                        (Coordinate.fromPixelsToGridCells coordinate)
+                        newNote
                         model.notes
               }
-            , Cmd.none
+            , Ports.playNote (fromGridRowIndexToMidiNote gridRowIndex.y)
             )
 
         NoteRemoved coordinate ->
