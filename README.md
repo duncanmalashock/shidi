@@ -1,4 +1,4 @@
-![](public/logo.jpg)
+<img src="public/logo.jpg" width="300" />
 
 ### local development
 
