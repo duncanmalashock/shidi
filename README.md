@@ -1,4 +1,4 @@
-# @duncanmalashock/arrange
+# @duncanmalashock/shidi
 
 ### local development
 
