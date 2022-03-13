@@ -3,7 +3,9 @@ module Main exposing (main)
 import AssocSet as Set
 import Browser
 import Coordinate
+import File
 import File.Download
+import File.Select
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events
@@ -12,6 +14,7 @@ import Piano
 import PianoRoll
 import Ports
 import Song
+import Task
 
 
 main : Program () Model Msg
@@ -52,6 +55,9 @@ type Msg
     | NoteRemoved Coordinate.Pixels
     | PlaySong
     | SaveSong
+    | LoadSong
+    | SongFileSelected File.File
+    | SongFileLoaded String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -101,15 +107,29 @@ update msg model =
         SaveSong ->
             ( model, saveSong (Song.toJson model.song) )
 
+        LoadSong ->
+            ( model, File.Select.file [ "text/shidi" ] SongFileSelected )
+
+        SongFileSelected file ->
+            ( model, Task.perform SongFileLoaded (File.toString file) )
+
+        SongFileLoaded jsonString ->
+            case Song.fromJsonString jsonString of
+                Ok song ->
+                    ( { model | song = song }, Cmd.none )
+
+                Err error ->
+                    ( model, Cmd.none )
+
 
 saveSong : Json.Encode.Value -> Cmd Msg
 saveSong value =
-    File.Download.string "example.shidi" "text/json" (Json.Encode.encode 0 value)
+    File.Download.string "example.shidi" "text/shidi" (Json.Encode.encode 0 value)
 
 
 view : Model -> { title : String, body : List (Html Msg) }
 view model =
-    { title = "App"
+    { title = "shidi"
     , body =
         [ Html.div [ Attr.class "row" ]
             [ Piano.view PianoNoteClicked
@@ -131,6 +151,7 @@ view model =
                         Html.text ""
                 , viewPlayButton
                 , viewSaveButton
+                , viewLoadButton
                 ]
             ]
         ]
@@ -153,6 +174,15 @@ viewSaveButton =
         , Html.Events.onClick SaveSong
         ]
         [ Html.text "Save" ]
+
+
+viewLoadButton : Html Msg
+viewLoadButton =
+    Html.button
+        [ Attr.class "load-button"
+        , Html.Events.onClick LoadSong
+        ]
+        [ Html.text "Load" ]
 
 
 viewNotes : Song.Song -> Html Msg
