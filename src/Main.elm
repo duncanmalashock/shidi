@@ -3,6 +3,7 @@ module Main exposing (main)
 import AssocSet as Set
 import Browser
 import Coordinate
+import File.Download
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events
@@ -10,6 +11,7 @@ import Json.Encode
 import Piano
 import PianoRoll
 import Ports
+import Song
 
 
 main : Program () Model Msg
@@ -24,7 +26,7 @@ main =
 
 type alias Model =
     { mousePosition : Maybe Coordinate.Pixels
-    , notes : Set.Set Coordinate.GridCells
+    , song : Song.Song
     }
 
 
@@ -38,7 +40,7 @@ init flags =
 initialModel : Model
 initialModel =
     { mousePosition = Nothing
-    , notes = Set.empty
+    , song = Song.new
     }
 
 
@@ -49,6 +51,7 @@ type Msg
     | NoteAdded Coordinate.Pixels
     | NoteRemoved Coordinate.Pixels
     | PlaySong
+    | SaveSong
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -76,48 +79,32 @@ update msg model =
                     Coordinate.toGridCellsRecord newNote
             in
             ( { model
-                | notes =
-                    Set.insert
-                        newNote
-                        model.notes
+                | song =
+                    Song.addNote newNote model.song
               }
-            , Ports.playNote (fromGridRowIndexToMidiNote gridRowIndex.y)
+            , Ports.playNote (131 - gridRowIndex.y)
             )
 
         NoteRemoved coordinate ->
             ( { model
-                | notes =
-                    Set.remove
+                | song =
+                    Song.removeNote
                         (Coordinate.fromPixelsToGridCells coordinate)
-                        model.notes
+                        model.song
               }
             , Cmd.none
             )
 
         PlaySong ->
-            ( model, Ports.playSong (notesToJson model.notes) )
+            ( model, Ports.playSong (Song.toJson model.song) )
+
+        SaveSong ->
+            ( model, saveSong (Song.toJson model.song) )
 
 
-notesToJson : Set.Set Coordinate.GridCells -> Json.Encode.Value
-notesToJson notes =
-    Json.Encode.list noteToJson (Set.toList notes)
-
-
-noteToJson : Coordinate.GridCells -> Json.Encode.Value
-noteToJson note =
-    let
-        { x, y } =
-            Coordinate.toGridCellsRecord note
-    in
-    Json.Encode.object
-        [ ( "midi", Json.Encode.int (fromGridRowIndexToMidiNote y) )
-        , ( "index", Json.Encode.int x )
-        ]
-
-
-fromGridRowIndexToMidiNote : Int -> Int
-fromGridRowIndexToMidiNote input =
-    131 - input
+saveSong : Json.Encode.Value -> Cmd Msg
+saveSong value =
+    File.Download.string "example.shidi" "text/json" (Json.Encode.encode 0 value)
 
 
 view : Model -> { title : String, body : List (Html Msg) }
@@ -134,7 +121,7 @@ view model =
                     , onLeftClick = NoteAdded
                     , onRightClick = NoteRemoved
                     }
-                , viewNotes model.notes
+                , viewNotes model.song
                 , case model.mousePosition of
                     Just coordinate ->
                         viewNote "mediumseagreen"
@@ -143,6 +130,7 @@ view model =
                     Nothing ->
                         Html.text ""
                 , viewPlayButton
+                , viewSaveButton
                 ]
             ]
         ]
@@ -158,9 +146,18 @@ viewPlayButton =
         [ Html.text "Play" ]
 
 
-viewNotes : Set.Set Coordinate.GridCells -> Html Msg
-viewNotes coordinateSet =
-    Set.toList coordinateSet
+viewSaveButton : Html Msg
+viewSaveButton =
+    Html.button
+        [ Attr.class "save-button"
+        , Html.Events.onClick SaveSong
+        ]
+        [ Html.text "Save" ]
+
+
+viewNotes : Song.Song -> Html Msg
+viewNotes song =
+    Song.toList song
         |> List.map (viewNote "deeppink")
         |> Html.div []
 
