@@ -1,4 +1,4 @@
-# @duncanmalashock/shidi
+![](public/logo.jpg)
 
 ### local development
 
