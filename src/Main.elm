@@ -1,6 +1,5 @@
 module Main exposing (main)
 
-import AssocSet as Set
 import Browser
 import Coordinate
 import File
@@ -79,10 +78,10 @@ update msg model =
         NoteAdded coordinate ->
             let
                 newNote =
-                    Coordinate.fromPixelsToGridCells coordinate
+                    Coordinate.fromPixelsToPianoRoll coordinate
 
                 gridRowIndex =
-                    Coordinate.toGridCellsRecord newNote
+                    Coordinate.toPianoRollRecord newNote
             in
             ( { model
                 | song =
@@ -95,7 +94,7 @@ update msg model =
             ( { model
                 | song =
                     Song.removeNote
-                        (Coordinate.fromPixelsToGridCells coordinate)
+                        (Coordinate.fromPixelsToPianoRoll coordinate)
                         model.song
               }
             , Cmd.none
@@ -145,7 +144,7 @@ view model =
                 , case model.mousePosition of
                     Just coordinate ->
                         viewNote "mediumseagreen"
-                            (Coordinate.fromPixelsToGridCells coordinate)
+                            (Coordinate.fromPixelsToPianoRoll coordinate)
 
                     Nothing ->
                         Html.text ""
@@ -192,11 +191,11 @@ viewNotes song =
         |> Html.div []
 
 
-viewNote : String -> Coordinate.GridCells -> Html Msg
+viewNote : String -> Coordinate.PianoRoll -> Html Msg
 viewNote color coordinate =
     let
         { x, y } =
-            Coordinate.fromGridCellsToPixels coordinate
+            Coordinate.fromPianoRollToPixels coordinate
                 |> Coordinate.toPixelsRecord
     in
     Html.div

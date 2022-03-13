@@ -21,7 +21,7 @@ import Json.Encode
 
 
 type Song
-    = Song (AssocSet.Set Coordinate.GridCells)
+    = Song (AssocSet.Set Coordinate.PianoRoll)
 
 
 new : Song
@@ -29,17 +29,17 @@ new =
     Song AssocSet.empty
 
 
-addNote : Coordinate.GridCells -> Song -> Song
+addNote : Coordinate.PianoRoll -> Song -> Song
 addNote newNote (Song song) =
     Song (AssocSet.insert newNote song)
 
 
-removeNote : Coordinate.GridCells -> Song -> Song
+removeNote : Coordinate.PianoRoll -> Song -> Song
 removeNote newNote (Song song) =
     Song (AssocSet.remove newNote song)
 
 
-toList : Song -> List Coordinate.GridCells
+toList : Song -> List Coordinate.PianoRoll
 toList (Song song) =
     AssocSet.toList song
 
@@ -49,11 +49,11 @@ toJson (Song song) =
     Json.Encode.list noteToJson (AssocSet.toList song)
 
 
-noteToJson : Coordinate.GridCells -> Json.Encode.Value
+noteToJson : Coordinate.PianoRoll -> Json.Encode.Value
 noteToJson note =
     let
         { x, y } =
-            Coordinate.toGridCellsRecord note
+            Coordinate.toPianoRollRecord note
     in
     Json.Encode.object
         [ ( "midi", Json.Encode.int (fromGridRowIndexToMidiNote y) )
@@ -81,16 +81,16 @@ fromJsonString jsonString =
             Err error
 
 
-decoder : Json.Decode.Decoder (AssocSet.Set Coordinate.GridCells)
+decoder : Json.Decode.Decoder (AssocSet.Set Coordinate.PianoRoll)
 decoder =
     noteDecoder
         |> Json.Decode.list
         |> Json.Decode.map AssocSet.fromList
 
 
-noteDecoder : Json.Decode.Decoder Coordinate.GridCells
+noteDecoder : Json.Decode.Decoder Coordinate.PianoRoll
 noteDecoder =
-    Json.Decode.map2 Coordinate.gridCells
+    Json.Decode.map2 Coordinate.pianoRoll
         (Json.Decode.field "index" Json.Decode.int)
         (Json.Decode.field "midi" Json.Decode.int
             |> Json.Decode.map toGridRowIndexFromMidiNote

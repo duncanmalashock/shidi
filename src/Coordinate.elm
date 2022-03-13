@@ -1,21 +1,21 @@
 module Coordinate exposing
-    ( GridCells, gridCells
+    ( PianoRoll, pianoRoll
     , Pixels, pixels
-    , toPixelsRecord, toGridCellsRecord
+    , toPixelsRecord, toPianoRollRecord
     , roundToNearestScreenCell
-    , fromPixelsToGridCells, fromGridCellsToPixels
+    , fromPixelsToPianoRoll, fromPianoRollToPixels
     )
 
 {-|
 
-@docs GridCells, gridCells
+@docs PianoRoll, pianoRoll
 @docs Pixels, pixels
 
-@docs toPixelsRecord, toGridCellsRecord
+@docs toPixelsRecord, toPianoRollRecord
 
 @docs roundToNearestScreenCell
 
-@docs fromPixelsToGridCells, fromGridCellsToPixels
+@docs fromPixelsToPianoRoll, fromPianoRollToPixels
 
 -}
 
@@ -28,16 +28,16 @@ type alias Pixels =
     Coordinate InPixels
 
 
-type alias GridCells =
-    Coordinate InGridCells
+type alias PianoRoll =
+    Coordinate InPianoRoll
 
 
 type InPixels
     = Pixels
 
 
-type InGridCells
-    = GridCells
+type InPianoRoll
+    = PianoRoll
 
 
 new : Int -> Int -> Coordinate any
@@ -57,8 +57,8 @@ toPixelsRecord =
     toRecord
 
 
-toGridCellsRecord : GridCells -> { x : Int, y : Int }
-toGridCellsRecord =
+toPianoRollRecord : PianoRoll -> { x : Int, y : Int }
+toPianoRollRecord =
     toRecord
 
 
@@ -67,8 +67,8 @@ pixels =
     new
 
 
-gridCells : Int -> Int -> Coordinate InGridCells
-gridCells =
+pianoRoll : Int -> Int -> Coordinate InPianoRoll
+pianoRoll =
     new
 
 
@@ -85,16 +85,16 @@ roundToNearestScreenCell (Coordinate ( x, y )) =
         )
 
 
-fromPixelsToGridCells : Coordinate InPixels -> Coordinate InGridCells
-fromPixelsToGridCells (Coordinate ( x, y )) =
+fromPixelsToPianoRoll : Coordinate InPixels -> Coordinate InPianoRoll
+fromPixelsToPianoRoll (Coordinate ( x, y )) =
     Coordinate
         ( x // cellSize
         , y // cellSize
         )
 
 
-fromGridCellsToPixels : Coordinate InGridCells -> Coordinate InPixels
-fromGridCellsToPixels (Coordinate ( x, y )) =
+fromPianoRollToPixels : Coordinate InPianoRoll -> Coordinate InPixels
+fromPianoRollToPixels (Coordinate ( x, y )) =
     Coordinate
         ( x * cellSize
         , y * cellSize
