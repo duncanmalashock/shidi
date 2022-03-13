@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "build": "vite build",
-    "start": "vite"
+    "build": "rm -rf ./tmp/elm-music-theory && git clone --depth 1 git@github.com:duncanmalashock/elm-music-theory ./tmp/elm-music-theory && vite build",
+    "start": "npm run build && vite"
   },
   "author": "",
   "license": "ISC",
