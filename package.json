@@ -1,12 +1,13 @@
 {
-  "name": "arrange",
+  "name": "shidi",
   "version": "1.0.0",
-  "description": "",
+  "description": "music editor",
   "scripts": {
-    "build": "rm -rf ./tmp/elm-music-theory && git clone --depth 1 https://github.com/duncanmalashock/elm-music-theory ./tmp/elm-music-theory && vite build",
-    "start": "npm run build && vite"
+    "load-deps": "sh scripts/elm-music-theory.sh",
+    "build": "yarn load-deps && vite build",
+    "start": "yarn build && vite"
   },
-  "author": "",
+  "author": "Duncan Malashock",
   "license": "ISC",
   "dependencies": {
     "elm": "^0.19.1-5",
