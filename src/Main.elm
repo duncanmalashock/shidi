@@ -1,6 +1,7 @@
 module Main exposing (main)
 
 import Browser
+import Browser.Dom
 import Coordinate
 import File
 import File.Download
@@ -29,6 +30,8 @@ main =
 type alias Model =
     { mousePosition : Maybe Coordinate.Pixels
     , song : Song.Song
+    , fileName : String
+    , showSaveModal : Bool
     }
 
 
@@ -43,6 +46,8 @@ initialModel : Model
 initialModel =
     { mousePosition = Nothing
     , song = Song.new
+    , fileName = ""
+    , showSaveModal = False
     }
 
 
@@ -57,6 +62,10 @@ type Msg
     | LoadSong
     | SongFileSelected File.File
     | SongFileLoaded String
+    | SaveSongConfirmed
+    | FileNameInputFocused (Result Browser.Dom.Error ())
+    | TypedIntoNameField String
+    | DismissedSaveModal
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -104,13 +113,26 @@ update msg model =
             ( model, Ports.playSong (Song.toJson model.song) )
 
         SaveSong ->
-            ( model, saveSong (Song.toJson model.song) )
+            ( { model
+                | showSaveModal = True
+              }
+            , Task.attempt FileNameInputFocused (Browser.Dom.focus "filename-input")
+            )
+
+        FileNameInputFocused _ ->
+            ( model, Cmd.none )
 
         LoadSong ->
             ( model, File.Select.file [ "text/shidi" ] SongFileSelected )
 
         SongFileSelected file ->
-            ( model, Task.perform SongFileLoaded (File.toString file) )
+            ( { model
+                | fileName =
+                    File.name file
+                        |> String.dropRight (String.length ".shidi")
+              }
+            , Task.perform SongFileLoaded (File.toString file)
+            )
 
         SongFileLoaded jsonString ->
             case Song.fromJsonString jsonString of
@@ -120,10 +142,23 @@ update msg model =
                 Err error ->
                     ( model, Cmd.none )
 
+        SaveSongConfirmed ->
+            ( { model | showSaveModal = False }
+            , saveSong model.fileName (Song.toJson model.song)
+            )
 
-saveSong : Json.Encode.Value -> Cmd Msg
-saveSong value =
-    File.Download.string "example.shidi" "text/shidi" (Json.Encode.encode 0 value)
+        TypedIntoNameField newFileName ->
+            ( { model | fileName = newFileName }, Cmd.none )
+
+        DismissedSaveModal ->
+            ( { model | showSaveModal = False }
+            , Cmd.none
+            )
+
+
+saveSong : String -> Json.Encode.Value -> Cmd Msg
+saveSong fileName value =
+    File.Download.string (fileName ++ ".shidi") "text/shidi" (Json.Encode.encode 0 value)
 
 
 view : Model -> { title : String, body : List (Html Msg) }
@@ -153,8 +188,39 @@ view model =
                 , viewLoadButton
                 ]
             ]
+        , viewFileSaveDialog model
         ]
     }
+
+
+viewFileSaveDialog : Model -> Html Msg
+viewFileSaveDialog model =
+    if model.showSaveModal then
+        Html.div []
+            [ Html.div
+                [ Attr.class "modal-dismiss"
+                , Html.Events.onClick DismissedSaveModal
+                ]
+                []
+            , Html.form
+                [ Attr.class "modal"
+                , Html.Events.onSubmit SaveSongConfirmed
+                ]
+                [ Html.input
+                    [ Attr.type_ "text"
+                    , Html.Events.onInput TypedIntoNameField
+                    , Attr.value model.fileName
+                    , Attr.id "filename-input"
+                    ]
+                    []
+                , Html.button
+                    []
+                    [ Html.text "Save" ]
+                ]
+            ]
+
+    else
+        Html.text ""
 
 
 viewPlayButton : Html Msg
