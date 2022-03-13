@@ -4,12 +4,12 @@ import Browser
 import Browser.Dom
 import Coordinate
 import File
-import File.Download
 import File.Select
+import File.Shidi
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events
-import Json.Encode
+import Json.Decode
 import Music
 import Music.Key
 import Music.Meter
@@ -50,7 +50,7 @@ init flags =
 initialModel : Model
 initialModel =
     { mousePosition = Nothing
-    , song = Song.new
+    , song = Song.empty
     , fileName = ""
     , showSaveModal = False
     , music =
@@ -72,7 +72,7 @@ type Msg
     | SaveSong
     | LoadSong
     | SongFileSelected File.File
-    | SongFileLoaded String
+    | SongFileLoaded (Result Json.Decode.Error Song.Song)
     | SaveSongConfirmed
     | FileNameInputFocused (Result Browser.Dom.Error ())
     | TypedIntoNameField String
@@ -121,7 +121,7 @@ update msg model =
             )
 
         PlaySong ->
-            ( model, Ports.playSong (Song.toJson model.song) )
+            ( model, Ports.playSong model.song )
 
         SaveSong ->
             ( { model
@@ -142,11 +142,11 @@ update msg model =
                     File.name file
                         |> String.dropRight (String.length ".shidi")
               }
-            , Task.perform SongFileLoaded (File.toString file)
+            , File.Shidi.load SongFileLoaded file
             )
 
-        SongFileLoaded jsonString ->
-            case Song.fromJsonString jsonString of
+        SongFileLoaded result ->
+            case result of
                 Ok song ->
                     ( { model | song = song }, Cmd.none )
 
@@ -155,7 +155,7 @@ update msg model =
 
         SaveSongConfirmed ->
             ( { model | showSaveModal = False }
-            , saveSong model.fileName (Song.toJson model.song)
+            , File.Shidi.save model.fileName model.song
             )
 
         TypedIntoNameField newFileName ->
@@ -165,11 +165,6 @@ update msg model =
             ( { model | showSaveModal = False }
             , Cmd.none
             )
-
-
-saveSong : String -> Json.Encode.Value -> Cmd Msg
-saveSong fileName value =
-    File.Download.string (fileName ++ ".shidi") "text/shidi" (Json.Encode.encode 0 value)
 
 
 view : Model -> { title : String, body : List (Html Msg) }
@@ -263,7 +258,7 @@ viewLoadButton =
 
 viewNotes : Song.Song -> Html Msg
 viewNotes song =
-    Song.toList song
+    Song.notes song
         |> List.map (viewNote "deeppink")
         |> Html.div []
 

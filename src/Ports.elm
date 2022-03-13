@@ -1,6 +1,8 @@
 port module Ports exposing (playNote, playSong)
 
+import Coordinate
 import Json.Encode
+import Song
 
 
 port outgoing :
@@ -18,9 +20,27 @@ playNote noteNumber =
         }
 
 
-playSong : Json.Encode.Value -> Cmd msg
-playSong notes =
+playSong : Song.Song -> Cmd msg
+playSong song =
+    let
+        noteToJson : Coordinate.PianoRoll -> Json.Encode.Value
+        noteToJson note =
+            let
+                { x, y } =
+                    Coordinate.toPianoRollRecord note
+            in
+            Json.Encode.object
+                [ ( "midi", Json.Encode.int (fromGridRowIndexToMidiNote y) )
+                , ( "index", Json.Encode.int x )
+                ]
+
+        fromGridRowIndexToMidiNote : Int -> Int
+        fromGridRowIndexToMidiNote input =
+            131 - input
+    in
     outgoing
         { tag = "playSong"
-        , data = notes
+        , data =
+            Song.notes song
+                |> Json.Encode.list noteToJson
         }

@@ -1,31 +1,34 @@
 module Song exposing
-    ( Song, new, fromJsonString
+    ( Song, empty, new
     , addNote, removeNote
-    , toJson, toList
+    , notes
     )
 
 {-|
 
-@docs Song, new, fromJsonString
+@docs Song, empty, new
 
 @docs addNote, removeNote
 
-@docs toJson, toList
+@docs notes
 
 -}
 
 import AssocSet
 import Coordinate
-import Json.Decode
-import Json.Encode
 
 
 type Song
     = Song (AssocSet.Set Coordinate.PianoRoll)
 
 
-new : Song
-new =
+new : List Coordinate.PianoRoll -> Song
+new notes_ =
+    Song (AssocSet.fromList notes_)
+
+
+empty : Song
+empty =
     Song AssocSet.empty
 
 
@@ -39,59 +42,6 @@ removeNote newNote (Song song) =
     Song (AssocSet.remove newNote song)
 
 
-toList : Song -> List Coordinate.PianoRoll
-toList (Song song) =
+notes : Song -> List Coordinate.PianoRoll
+notes (Song song) =
     AssocSet.toList song
-
-
-toJson : Song -> Json.Encode.Value
-toJson (Song song) =
-    Json.Encode.list noteToJson (AssocSet.toList song)
-
-
-noteToJson : Coordinate.PianoRoll -> Json.Encode.Value
-noteToJson note =
-    let
-        { x, y } =
-            Coordinate.toPianoRollRecord note
-    in
-    Json.Encode.object
-        [ ( "midi", Json.Encode.int (fromGridRowIndexToMidiNote y) )
-        , ( "index", Json.Encode.int x )
-        ]
-
-
-fromGridRowIndexToMidiNote : Int -> Int
-fromGridRowIndexToMidiNote input =
-    131 - input
-
-
-toGridRowIndexFromMidiNote : Int -> Int
-toGridRowIndexFromMidiNote input =
-    131 - input
-
-
-fromJsonString : String -> Result Json.Decode.Error Song
-fromJsonString jsonString =
-    case Json.Decode.decodeString decoder jsonString of
-        Ok song ->
-            Ok (Song song)
-
-        Err error ->
-            Err error
-
-
-decoder : Json.Decode.Decoder (AssocSet.Set Coordinate.PianoRoll)
-decoder =
-    noteDecoder
-        |> Json.Decode.list
-        |> Json.Decode.map AssocSet.fromList
-
-
-noteDecoder : Json.Decode.Decoder Coordinate.PianoRoll
-noteDecoder =
-    Json.Decode.map2 Coordinate.pianoRoll
-        (Json.Decode.field "index" Json.Decode.int)
-        (Json.Decode.field "midi" Json.Decode.int
-            |> Json.Decode.map toGridRowIndexFromMidiNote
-        )
