@@ -39,31 +39,36 @@ pixels x y =
     Pixels { x = x, y = y }
 
 
-cellSize : Int
-cellSize =
+cellSizeX : Int
+cellSizeX =
+    21
+
+
+cellSizeY : Int
+cellSizeY =
     21
 
 
 pixelsXToDuration : Int -> Music.Duration.Duration
 pixelsXToDuration x =
-    Music.Duration.multiplyByInt (x // cellSize) Music.Duration.quarter
+    Music.Duration.multiplyByInt (x // cellSizeX) Music.Duration.quarter
 
 
 durationToPixelsX : Music.Duration.Duration -> Int
 durationToPixelsX duration =
-    Basics.round (Music.Duration.toFloat duration * 4) * cellSize
+    Basics.round (Music.Duration.toFloat duration * 4) * cellSizeX
 
 
 pixelsYToPitch : Int -> Music.Pitch.Pitch
 pixelsYToPitch y =
-    (131 - (y // cellSize))
+    (131 - (y // cellSizeY))
         |> Music.Pitch.fromMIDINoteNumber
 
 
 pitchToPixelsY : Music.Pitch.Pitch -> Int
 pitchToPixelsY pitch =
     (131 - Music.Pitch.toMIDINoteNumber pitch)
-        * cellSize
+        * cellSizeY
 
 
 fromPixelsToMusic : Pixels -> Music

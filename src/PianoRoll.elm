@@ -5,58 +5,140 @@ import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events
 import Json.Decode
+import Music
 import PianoRoll.Key
+import Project
 
 
 view :
-    { onMouseMove : Coordinate.Pixels -> msg
+    { onMouseMove : Coordinate.Music -> msg
     , onMouseLeave : msg
-    , onLeftClick : Coordinate.Pixels -> msg
-    , onRightClick : Coordinate.Pixels -> msg
+    , onLeftClick : Coordinate.Music -> msg
+    , onRightClick : Coordinate.Music -> msg
+    , project : Project.Project
+    , mousePosition : Maybe Coordinate.Music
     }
     -> Html msg
 view options =
     Html.div
-        [ Attr.class "piano-roll"
-        , Attr.style "background-image" (backgroundImageAttr { height = 21 })
-        , Html.Events.on "mousemove" (offsetDecoder |> Json.Decode.map options.onMouseMove)
-        , onMouseUp
-            { onLeftClick = options.onLeftClick
-            , onRightClick = options.onRightClick
-            }
-        , Html.Events.onMouseLeave options.onMouseLeave
+        [ Attr.class "piano-roll__wrapper" ]
+        [ viewRoll options
+        , viewNotes options.project
+        , case options.mousePosition of
+            Just coordinate ->
+                viewNote "mediumseagreen"
+                    (Coordinate.fromMusicToNoteEvent coordinate)
+
+            Nothing ->
+                Html.text ""
+        ]
+
+
+viewRoll :
+    { a
+        | onMouseMove : Coordinate.Music -> msg
+        , onMouseLeave : msg
+        , onLeftClick : Coordinate.Music -> msg
+        , onRightClick : Coordinate.Music -> msg
+    }
+    -> Html msg
+viewRoll options =
+    let
+        mouseEventAttributes : List (Html.Attribute msg)
+        mouseEventAttributes =
+            mouseEvents
+                { onMouseMove = options.onMouseMove
+                , onMouseLeave = options.onMouseLeave
+                , onLeftClick = options.onLeftClick
+                , onRightClick = options.onRightClick
+                }
+    in
+    Html.div
+        ([ Attr.class "piano-roll"
+         , Attr.style "background-image" (backgroundImageAttr { height = 21 })
+         ]
+            ++ mouseEventAttributes
+        )
+        []
+
+
+viewNotes : Project.Project -> Html msg
+viewNotes project =
+    Project.noteEvents project
+        |> List.map (viewNote "deeppink")
+        |> Html.div []
+
+
+viewNote : String -> Music.NoteEvent -> Html msg
+viewNote color noteEvent =
+    let
+        { x, y } =
+            noteEvent
+                |> Coordinate.fromNoteEventToMusic
+                |> Coordinate.fromMusicToPixels
+                |> Coordinate.pixelsXY
+    in
+    Html.div
+        [ Attr.class "note-preview"
+        , Attr.style "background" color
+        , Attr.style "transform"
+            ("translate($x, $y)"
+                |> String.replace "$x" (String.fromInt x ++ "px")
+                |> String.replace "$y" (String.fromInt y ++ "px")
+            )
         ]
         []
 
 
-onMouseUp :
-    { onLeftClick : Coordinate.Pixels -> msg
-    , onRightClick : Coordinate.Pixels -> msg
+mouseEvents :
+    { onMouseMove : Coordinate.Music -> msg
+    , onMouseLeave : msg
+    , onLeftClick : Coordinate.Music -> msg
+    , onRightClick : Coordinate.Music -> msg
     }
-    -> Html.Attribute msg
-onMouseUp { onLeftClick, onRightClick } =
-    Html.Events.on "mouseup"
-        (Json.Decode.andThen
-            (\mouseButton ->
-                if mouseButton == 0 then
-                    offsetDecoder |> Json.Decode.map onLeftClick
+    -> List (Html.Attribute msg)
+mouseEvents options =
+    let
+        onMouseMove : Html.Attribute msg
+        onMouseMove =
+            Html.Events.on "mousemove"
+                (offsetDecoder
+                    |> Json.Decode.map Coordinate.fromPixelsToMusic
+                    |> Json.Decode.map options.onMouseMove
+                )
 
-                else if mouseButton == 2 then
-                    offsetDecoder |> Json.Decode.map onRightClick
+        onMouseUp : Html.Attribute msg
+        onMouseUp =
+            Html.Events.on "mouseup"
+                (Json.Decode.andThen
+                    (\mouseButton ->
+                        if mouseButton == 0 then
+                            offsetDecoder
+                                |> Json.Decode.map Coordinate.fromPixelsToMusic
+                                |> Json.Decode.map options.onLeftClick
 
-                else
-                    Json.Decode.fail "bad witch club 🧙\u{200D}♀️"
-            )
-            (Json.Decode.field "button" Json.Decode.int)
-        )
+                        else if mouseButton == 2 then
+                            offsetDecoder
+                                |> Json.Decode.map Coordinate.fromPixelsToMusic
+                                |> Json.Decode.map options.onRightClick
 
+                        else
+                            Json.Decode.fail "bad witch club 🧙\u{200D}♀️"
+                    )
+                    (Json.Decode.field "button" Json.Decode.int)
+                )
 
-offsetDecoder : Json.Decode.Decoder Coordinate.Pixels
-offsetDecoder =
-    Json.Decode.map2
-        Coordinate.pixels
-        (Json.Decode.field "offsetX" Json.Decode.int)
-        (Json.Decode.field "offsetY" Json.Decode.int)
+        offsetDecoder : Json.Decode.Decoder Coordinate.Pixels
+        offsetDecoder =
+            Json.Decode.map2
+                Coordinate.pixels
+                (Json.Decode.field "offsetX" Json.Decode.int)
+                (Json.Decode.field "offsetY" Json.Decode.int)
+    in
+    [ onMouseMove
+    , onMouseUp
+    , Html.Events.onMouseLeave options.onMouseLeave
+    ]
 
 
 backgroundImageAttr : { height : Int } -> String

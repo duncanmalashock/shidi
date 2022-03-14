@@ -31,7 +31,7 @@ main =
 
 
 type alias Model =
-    { mousePosition : Maybe Coordinate.Pixels
+    { mousePosition : Maybe Coordinate.Music
     , project : Project.Project
     , fileName : String
     , showSaveModal : Bool
@@ -58,10 +58,10 @@ type Msg
     = -- Piano keys
       UserClickedPianoKey Int
       -- Piano roll
-    | UserMovedMouseOverPianoRoll Coordinate.Pixels
+    | UserMovedMouseOverPianoRoll Coordinate.Music
     | UserMovedMouseOutOfPianoRoll
-    | UserClickedPianoRoll Coordinate.Pixels
-    | UserRightClickedPianoRoll Coordinate.Pixels
+    | UserClickedPianoRoll Coordinate.Music
+    | UserRightClickedPianoRoll Coordinate.Music
       -- Playback
     | UserClickedPlayButton
       -- Saving to file
@@ -97,7 +97,6 @@ update msg model =
                 newNoteEvent : Music.NoteEvent
                 newNoteEvent =
                     coordinate
-                        |> Coordinate.fromPixelsToMusic
                         |> Coordinate.fromMusicToNoteEvent
 
                 midiPitch : Int
@@ -117,7 +116,6 @@ update msg model =
                 noteEvent : Music.NoteEvent
                 noteEvent =
                     coordinate
-                        |> Coordinate.fromPixelsToMusic
                         |> Coordinate.fromMusicToNoteEvent
             in
             ( { model
@@ -182,25 +180,14 @@ view model =
     , body =
         [ Html.div [ Attr.class "row" ]
             [ Piano.view UserClickedPianoKey
-            , Html.div
-                [ Attr.class "piano-roll__wrapper" ]
-                [ PianoRoll.view
-                    { onMouseMove = UserMovedMouseOverPianoRoll
-                    , onMouseLeave = UserMovedMouseOutOfPianoRoll
-                    , onLeftClick = UserClickedPianoRoll
-                    , onRightClick = UserRightClickedPianoRoll
-                    }
-                , viewNotes model.project
-                , case model.mousePosition of
-                    Just coordinate ->
-                        viewNote "mediumseagreen"
-                            (Coordinate.fromPixelsToMusic coordinate
-                                |> Coordinate.fromMusicToNoteEvent
-                            )
-
-                    Nothing ->
-                        Html.text ""
-                ]
+            , PianoRoll.view
+                { onMouseMove = UserMovedMouseOverPianoRoll
+                , onMouseLeave = UserMovedMouseOutOfPianoRoll
+                , onLeftClick = UserClickedPianoRoll
+                , onRightClick = UserRightClickedPianoRoll
+                , project = model.project
+                , mousePosition = model.mousePosition
+                }
             , viewPlayButton
             , viewSaveButton
             , viewLoadButton
@@ -265,34 +252,6 @@ viewLoadButton =
         , Html.Events.onClick UserClickedLoadButton
         ]
         [ Html.text "Load" ]
-
-
-viewNotes : Project.Project -> Html Msg
-viewNotes project =
-    Project.noteEvents project
-        |> List.map (viewNote "deeppink")
-        |> Html.div []
-
-
-viewNote : String -> Music.NoteEvent -> Html Msg
-viewNote color noteEvent =
-    let
-        { x, y } =
-            noteEvent
-                |> Coordinate.fromNoteEventToMusic
-                |> Coordinate.fromMusicToPixels
-                |> Coordinate.pixelsXY
-    in
-    Html.div
-        [ Attr.class "note-preview"
-        , Attr.style "background" color
-        , Attr.style "transform"
-            ("translate($x, $y)"
-                |> String.replace "$x" (String.fromInt x ++ "px")
-                |> String.replace "$y" (String.fromInt y ++ "px")
-            )
-        ]
-        []
 
 
 subscriptions : Model -> Sub Msg
