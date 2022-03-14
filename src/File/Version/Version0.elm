@@ -1,4 +1,4 @@
-module File.Version0 exposing (decoder, encode)
+module File.Version.Version0 exposing (decoder, encode)
 
 import Coordinate
 import Json.Decode

@@ -4,8 +4,9 @@ import Browser
 import Browser.Dom
 import Coordinate
 import File
+import File.Load
+import File.Save
 import File.Select
-import File.Shidi
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events
@@ -132,7 +133,7 @@ update msg model =
                     File.name file
                         |> String.dropRight (String.length ".shidi")
               }
-            , File.Shidi.load SongFileLoaded file
+            , File.Load.load SongFileLoaded file
             )
 
         SongFileLoaded result ->
@@ -145,7 +146,7 @@ update msg model =
 
         SaveSongConfirmed ->
             ( { model | showSaveModal = False }
-            , File.Shidi.save model.fileName model.song
+            , File.Save.save model.fileName model.song
             )
 
         TypedIntoNameField newFileName ->

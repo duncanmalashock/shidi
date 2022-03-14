@@ -2,7 +2,6 @@ module Coordinate exposing
     ( PianoRoll, pianoRoll
     , Pixels, pixels
     , toPixelsRecord, toPianoRollRecord
-    , roundToNearestScreenCell
     , fromPixelsToPianoRoll, fromPianoRollToPixels
     )
 
@@ -12,8 +11,6 @@ module Coordinate exposing
 @docs Pixels, pixels
 
 @docs toPixelsRecord, toPianoRollRecord
-
-@docs roundToNearestScreenCell
 
 @docs fromPixelsToPianoRoll, fromPianoRollToPixels
 
@@ -75,14 +72,6 @@ pianoRoll =
 cellSize : Int
 cellSize =
     21
-
-
-roundToNearestScreenCell : Pixels -> Pixels
-roundToNearestScreenCell (Coordinate ( x, y )) =
-    Coordinate
-        ( x // cellSize * cellSize
-        , y // cellSize * cellSize
-        )
 
 
 fromPixelsToPianoRoll : Pixels -> PianoRoll
