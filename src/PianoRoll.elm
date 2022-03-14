@@ -1,4 +1,4 @@
-module PianoRoll exposing (..)
+module PianoRoll exposing (view)
 
 import Coordinate
 import Html exposing (Html)

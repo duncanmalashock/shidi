@@ -62,12 +62,12 @@ toPianoRollRecord =
     toRecord
 
 
-pixels : Int -> Int -> Coordinate InPixels
+pixels : Int -> Int -> Pixels
 pixels =
     new
 
 
-pianoRoll : Int -> Int -> Coordinate InPianoRoll
+pianoRoll : Int -> Int -> PianoRoll
 pianoRoll =
     new
 
@@ -77,7 +77,7 @@ cellSize =
     21
 
 
-roundToNearestScreenCell : Coordinate InPixels -> Coordinate InPixels
+roundToNearestScreenCell : Pixels -> Pixels
 roundToNearestScreenCell (Coordinate ( x, y )) =
     Coordinate
         ( x // cellSize * cellSize
@@ -85,7 +85,7 @@ roundToNearestScreenCell (Coordinate ( x, y )) =
         )
 
 
-fromPixelsToPianoRoll : Coordinate InPixels -> Coordinate InPianoRoll
+fromPixelsToPianoRoll : Pixels -> PianoRoll
 fromPixelsToPianoRoll (Coordinate ( x, y )) =
     Coordinate
         ( x // cellSize
@@ -93,7 +93,7 @@ fromPixelsToPianoRoll (Coordinate ( x, y )) =
         )
 
 
-fromPianoRollToPixels : Coordinate InPianoRoll -> Coordinate InPixels
+fromPianoRollToPixels : PianoRoll -> Pixels
 fromPianoRollToPixels (Coordinate ( x, y )) =
     Coordinate
         ( x * cellSize

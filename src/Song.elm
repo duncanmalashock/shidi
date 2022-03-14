@@ -14,34 +14,49 @@ module Song exposing
 
 -}
 
-import AssocSet
+import AssocSet as Set
 import Coordinate
 
 
 type Song
-    = Song (AssocSet.Set Coordinate.PianoRoll)
+    = Song Details
+
+
+type alias Details =
+    { noteEvents : Set.Set Coordinate.PianoRoll
+    }
 
 
 new : List Coordinate.PianoRoll -> Song
 new notes_ =
-    Song (AssocSet.fromList notes_)
+    Song
+        { noteEvents = Set.fromList notes_
+        }
 
 
 empty : Song
 empty =
-    Song AssocSet.empty
+    Song
+        { noteEvents = Set.empty
+        }
 
 
 addNote : Coordinate.PianoRoll -> Song -> Song
 addNote newNote (Song song) =
-    Song (AssocSet.insert newNote song)
+    Song
+        { song
+            | noteEvents = Set.insert newNote song.noteEvents
+        }
 
 
 removeNote : Coordinate.PianoRoll -> Song -> Song
 removeNote newNote (Song song) =
-    Song (AssocSet.remove newNote song)
+    Song
+        { song
+            | noteEvents = Set.remove newNote song.noteEvents
+        }
 
 
 notes : Song -> List Coordinate.PianoRoll
 notes (Song song) =
-    AssocSet.toList song
+    Set.toList song.noteEvents

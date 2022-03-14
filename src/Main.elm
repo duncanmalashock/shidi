@@ -97,6 +97,7 @@ update msg model =
 
         NoteAdded coordinate ->
             let
+                newNote : Coordinate.PianoRoll
                 newNote =
                     Coordinate.fromPixelsToPianoRoll coordinate
 

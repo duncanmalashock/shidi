@@ -6,7 +6,7 @@ import File.Version
 import File.Version0
 import Json.Decode
 import Json.Encode
-import Song exposing (Song)
+import Song
 import Task
 
 
@@ -17,7 +17,7 @@ save fileName song =
 
 
 load :
-    (Result Json.Decode.Error Song -> msg)
+    (Result Json.Decode.Error Song.Song -> msg)
     -> File.File
     -> Cmd msg
 load toMsg file =
@@ -34,7 +34,7 @@ encode song =
             File.Version0.encode song
 
 
-decode : String -> Result Json.Decode.Error Song
+decode : String -> Result Json.Decode.Error Song.Song
 decode jsonString =
     Json.Decode.decodeString
         (Json.Decode.oneOf File.Version.decoders)
