@@ -11,6 +11,8 @@ import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events
 import Json.Decode
+import MidiEvent
+import Music
 import Piano
 import PianoRoll
 import Ports
@@ -87,25 +89,36 @@ update msg model =
 
         NoteAdded coordinate ->
             let
-                newNote : Coordinate.PianoRoll
-                newNote =
-                    Coordinate.fromPixelsToPianoRoll coordinate
+                newNoteEvent : Music.NoteEvent
+                newNoteEvent =
+                    coordinate
+                        |> Coordinate.fromPixelsToMusic
+                        |> Coordinate.fromMusicToNoteEvent
 
-                gridRowIndex =
-                    Coordinate.toPianoRollRecord newNote
+                midiPitch : Int
+                midiPitch =
+                    MidiEvent.fromNoteEvent newNoteEvent
+                        |> .pitch
             in
             ( { model
                 | song =
-                    Song.addNote newNote model.song
+                    Song.addNote newNoteEvent model.song
               }
-            , Ports.playNote (131 - gridRowIndex.y)
+            , Ports.playNote midiPitch
             )
 
         NoteRemoved coordinate ->
+            let
+                noteEvent : Music.NoteEvent
+                noteEvent =
+                    coordinate
+                        |> Coordinate.fromPixelsToMusic
+                        |> Coordinate.fromMusicToNoteEvent
+            in
             ( { model
                 | song =
                     Song.removeNote
-                        (Coordinate.fromPixelsToPianoRoll coordinate)
+                        noteEvent
                         model.song
               }
             , Cmd.none
@@ -176,14 +189,16 @@ view model =
                 , case model.mousePosition of
                     Just coordinate ->
                         viewNote "mediumseagreen"
-                            (Coordinate.fromPixelsToPianoRoll coordinate)
+                            (Coordinate.fromPixelsToMusic coordinate
+                                |> Coordinate.fromMusicToNoteEvent
+                            )
 
                     Nothing ->
                         Html.text ""
-                , viewPlayButton
-                , viewSaveButton
-                , viewLoadButton
                 ]
+            , viewPlayButton
+            , viewSaveButton
+            , viewLoadButton
             ]
         , viewFileSaveDialog model
         ]
@@ -254,12 +269,14 @@ viewNotes song =
         |> Html.div []
 
 
-viewNote : String -> Coordinate.PianoRoll -> Html Msg
-viewNote color coordinate =
+viewNote : String -> Music.NoteEvent -> Html Msg
+viewNote color noteEvent =
     let
         { x, y } =
-            Coordinate.fromPianoRollToPixels coordinate
-                |> Coordinate.toPixelsRecord
+            noteEvent
+                |> Coordinate.fromNoteEventToMusic
+                |> Coordinate.fromMusicToPixels
+                |> Coordinate.pixelsXY
     in
     Html.div
         [ Attr.class "note-preview"

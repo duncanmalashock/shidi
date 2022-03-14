@@ -1,8 +1,9 @@
 module File.Version.V0 exposing (decoder, encode)
 
-import Coordinate
 import Json.Decode
 import Json.Encode
+import MidiEvent
+import Music
 import Song exposing (Song)
 
 
@@ -11,21 +12,17 @@ encode song =
     Json.Encode.list noteToJson (Song.notes song)
 
 
-noteToJson : Coordinate.PianoRoll -> Json.Encode.Value
-noteToJson note =
+noteToJson : Music.NoteEvent -> Json.Encode.Value
+noteToJson noteEvent =
     let
-        { x, y } =
-            Coordinate.toPianoRollRecord note
+        midiEvent : MidiEvent.MidiEvent
+        midiEvent =
+            MidiEvent.fromNoteEvent noteEvent
     in
     Json.Encode.object
-        [ ( "midi", Json.Encode.int (fromGridRowIndexToMidiNote y) )
-        , ( "index", Json.Encode.int x )
+        [ ( "midi", Json.Encode.int midiEvent.pitch )
+        , ( "index", Json.Encode.int midiEvent.start )
         ]
-
-
-fromGridRowIndexToMidiNote : Int -> Int
-fromGridRowIndexToMidiNote input =
-    131 - input
 
 
 decoder : Json.Decode.Decoder Song
@@ -34,20 +31,20 @@ decoder =
         |> Json.Decode.map Song.new
 
 
-notesDecoder : Json.Decode.Decoder (List Coordinate.PianoRoll)
+notesDecoder : Json.Decode.Decoder (List Music.NoteEvent)
 notesDecoder =
     Json.Decode.list noteDecoder
 
 
-noteDecoder : Json.Decode.Decoder Coordinate.PianoRoll
+noteDecoder : Json.Decode.Decoder Music.NoteEvent
 noteDecoder =
-    Json.Decode.map2 Coordinate.pianoRoll
-        (Json.Decode.field "index" Json.Decode.int)
-        (Json.Decode.field "midi" Json.Decode.int
-            |> Json.Decode.map toGridRowIndexFromMidiNote
+    Json.Decode.map2
+        (\start pitch ->
+            MidiEvent.new
+                { start = start
+                , pitch = pitch
+                }
+                |> MidiEvent.toNoteEvent
         )
-
-
-toGridRowIndexFromMidiNote : Int -> Int
-toGridRowIndexFromMidiNote input =
-    131 - input
+        (Json.Decode.field "index" Json.Decode.int)
+        (Json.Decode.field "midi" Json.Decode.int)

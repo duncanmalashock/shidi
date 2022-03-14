@@ -1,72 +1,42 @@
 module Coordinate exposing
-    ( PianoRoll, pianoRoll
-    , Pixels, pixels
-    , toPixelsRecord, toPianoRollRecord
-    , fromPixelsToPianoRoll, fromPianoRollToPixels
+    ( Pixels, pixels
+    , pixelsXY
+    , Music
+    , fromMusicToNoteEvent, fromMusicToPixels, fromNoteEventToMusic, fromPixelsToMusic
     )
 
 {-|
 
-@docs PianoRoll, pianoRoll
 @docs Pixels, pixels
 
-@docs toPixelsRecord, toPianoRollRecord
+@docs pixelsXY
 
-@docs fromPixelsToPianoRoll, fromPianoRollToPixels
+@docs Music
 
 -}
 
-
-type Coordinate reference
-    = Coordinate ( Int, Int )
-
-
-type alias Pixels =
-    Coordinate InPixels
+import Music
+import Music.Duration
+import Music.Note
+import Music.Pitch
 
 
-type alias PianoRoll =
-    Coordinate InPianoRoll
+type Pixels
+    = Pixels { x : Int, y : Int }
 
 
-type InPixels
-    = Pixels
+type Music
+    = Music Music.Duration.Duration Music.Pitch.Pitch
 
 
-type InPianoRoll
-    = PianoRoll
-
-
-new : Int -> Int -> Coordinate any
-new x y =
-    Coordinate ( x, y )
-
-
-toRecord : Coordinate any -> { x : Int, y : Int }
-toRecord (Coordinate ( x, y )) =
-    { x = x
-    , y = y
-    }
-
-
-toPixelsRecord : Pixels -> { x : Int, y : Int }
-toPixelsRecord =
-    toRecord
-
-
-toPianoRollRecord : PianoRoll -> { x : Int, y : Int }
-toPianoRollRecord =
-    toRecord
+pixelsXY : Pixels -> { x : Int, y : Int }
+pixelsXY (Pixels coordinateRecord) =
+    coordinateRecord
 
 
 pixels : Int -> Int -> Pixels
-pixels =
-    new
-
-
-pianoRoll : Int -> Int -> PianoRoll
-pianoRoll =
-    new
+pixels x y =
+    Pixels { x = x, y = y }
 
 
 cellSize : Int
@@ -74,17 +44,48 @@ cellSize =
     21
 
 
-fromPixelsToPianoRoll : Pixels -> PianoRoll
-fromPixelsToPianoRoll (Coordinate ( x, y )) =
-    Coordinate
-        ( x // cellSize
-        , y // cellSize
-        )
+pixelsXToDuration : Int -> Music.Duration.Duration
+pixelsXToDuration x =
+    Music.Duration.multiplyByInt (x // cellSize) Music.Duration.quarter
 
 
-fromPianoRollToPixels : PianoRoll -> Pixels
-fromPianoRollToPixels (Coordinate ( x, y )) =
-    Coordinate
-        ( x * cellSize
-        , y * cellSize
-        )
+durationToPixelsX : Music.Duration.Duration -> Int
+durationToPixelsX duration =
+    Basics.round (Music.Duration.toFloat duration * 4) * cellSize
+
+
+pixelsYToPitch : Int -> Music.Pitch.Pitch
+pixelsYToPitch y =
+    (131 - (y // cellSize))
+        |> Music.Pitch.fromMIDINoteNumber
+
+
+pitchToPixelsY : Music.Pitch.Pitch -> Int
+pitchToPixelsY pitch =
+    (131 - Music.Pitch.toMIDINoteNumber pitch)
+        * cellSize
+
+
+fromPixelsToMusic : Pixels -> Music
+fromPixelsToMusic (Pixels { x, y }) =
+    Music (pixelsXToDuration x) (pixelsYToPitch y)
+
+
+fromMusicToPixels : Music -> Pixels
+fromMusicToPixels (Music duration pitch) =
+    Pixels
+        { x = durationToPixelsX duration
+        , y = pitchToPixelsY pitch
+        }
+
+
+fromMusicToNoteEvent : Music -> Music.NoteEvent
+fromMusicToNoteEvent (Music duration pitch) =
+    { at = duration
+    , value = Music.Note.quarter pitch
+    }
+
+
+fromNoteEventToMusic : Music.NoteEvent -> Music
+fromNoteEventToMusic noteEvent =
+    Music noteEvent.at (Music.Note.pitch noteEvent.value)

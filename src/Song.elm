@@ -14,12 +14,7 @@ module Song exposing
 
 -}
 
-import AssocSet as Set
-import Coordinate
 import Music
-import Music.Duration
-import Music.Note
-import Music.Pitch
 
 
 type Song
@@ -31,38 +26,10 @@ type alias Details =
     }
 
 
-pianoRollCoordinateToNoteEvent : Coordinate.PianoRoll -> Music.NoteEvent
-pianoRollCoordinateToNoteEvent coordinate =
-    let
-        { x, y } =
-            Coordinate.toPianoRollRecord coordinate
-    in
-    { at = Music.Duration.multiplyByInt x Music.Duration.quarter
-    , value = Music.Note.quarter (Music.Pitch.fromMIDINoteNumber y)
-    }
-
-
-noteEventToPianoRollCoordinate : Music.NoteEvent -> Coordinate.PianoRoll
-noteEventToPianoRollCoordinate { at, value } =
-    let
-        x : Int
-        x =
-            Basics.round (Music.Duration.toFloat at * 4)
-
-        y : Int
-        y =
-            Music.Note.pitch value
-                |> Music.Pitch.toMIDINoteNumber
-    in
-    Coordinate.pianoRoll x y
-
-
-new : List Coordinate.PianoRoll -> Song
+new : List Music.NoteEvent -> Song
 new notes_ =
     Song
-        { noteEvents =
-            notes_
-                |> List.map pianoRollCoordinateToNoteEvent
+        { noteEvents = notes_
         }
 
 
@@ -73,26 +40,16 @@ empty =
         }
 
 
-addNote : Coordinate.PianoRoll -> Song -> Song
-addNote newNote (Song song) =
-    let
-        noteToAdd : Music.NoteEvent
-        noteToAdd =
-            pianoRollCoordinateToNoteEvent newNote
-    in
+addNote : Music.NoteEvent -> Song -> Song
+addNote noteToAdd (Song song) =
     Song
         { song
             | noteEvents = noteToAdd :: song.noteEvents
         }
 
 
-removeNote : Coordinate.PianoRoll -> Song -> Song
-removeNote newNote (Song song) =
-    let
-        noteToRemove : Music.NoteEvent
-        noteToRemove =
-            pianoRollCoordinateToNoteEvent newNote
-    in
+removeNote : Music.NoteEvent -> Song -> Song
+removeNote noteToRemove (Song song) =
     Song
         { song
             | noteEvents =
@@ -101,6 +58,6 @@ removeNote newNote (Song song) =
         }
 
 
-notes : Song -> List Coordinate.PianoRoll
+notes : Song -> List Music.NoteEvent
 notes (Song song) =
-    List.map noteEventToPianoRollCoordinate song.noteEvents
+    song.noteEvents
