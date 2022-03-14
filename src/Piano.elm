@@ -17,7 +17,7 @@ whiteKeyHeight =
 
 whiteKeyWidth : Int
 whiteKeyWidth =
-    120
+    55
 
 
 blackKeyHeight : Int
@@ -27,7 +27,7 @@ blackKeyHeight =
 
 blackKeyWidth : Int
 blackKeyWidth =
-    66
+    25
 
 
 octaveHeight : Int
@@ -42,12 +42,12 @@ whiteKeysInOctave =
 
 cKeyLabelRightOffset : Int
 cKeyLabelRightOffset =
-    36
+    24
 
 
 cKeyLabelBottomOffset : Int
 cKeyLabelBottomOffset =
-    11
+    12
 
 
 view : (Int -> msg) -> Html msg
@@ -76,7 +76,7 @@ viewOctave onNoteClicked octave =
     in
     Svg.svg
         [ Attr.viewBox viewBoxAttr
-        , Attr.width "120"
+        , Attr.width (String.fromInt whiteKeyWidth)
         , Attr.class "piano"
         ]
         [ Svg.g []
