@@ -55,39 +55,44 @@ initialModel =
 
 
 type Msg
-    = MouseMovedOverGrid Coordinate.Pixels
-    | MouseLeftGrid
-    | PianoNoteClicked Int
-    | NoteAdded Coordinate.Pixels
-    | NoteRemoved Coordinate.Pixels
-    | PlaySong
-    | SaveSong
-    | LoadSong
-    | SongFileSelected File.File
-    | SongFileLoaded (Result Json.Decode.Error Song.Song)
-    | SaveSongConfirmed
-    | FileNameInputFocused (Result Browser.Dom.Error ())
-    | TypedIntoNameField String
-    | DismissedSaveModal
+    = -- Piano keys
+      UserClickedPianoKey Int
+      -- Piano roll
+    | UserMovedMouseOverPianoRoll Coordinate.Pixels
+    | UserMovedMouseOutOfPianoRoll
+    | UserClickedPianoRoll Coordinate.Pixels
+    | UserRightClickedPianoRoll Coordinate.Pixels
+      -- Playback
+    | UserClickedPlayButton
+      -- Saving to file
+    | UserClickedSaveButton
+    | UserClickedModalSaveButton
+    | AppFocusedOnFileNameField (Result Browser.Dom.Error ())
+    | UserTypedIntoNameField String
+    | UserDismissedSaveModal
+      -- Loading from file
+    | UserClickedLoadButton
+    | UserSelectedFile File.File
+    | AppLoadedFile (Result Json.Decode.Error Song.Song)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        MouseMovedOverGrid position ->
+        UserMovedMouseOverPianoRoll position ->
             ( { model | mousePosition = Just position }
             , Cmd.none
             )
 
-        MouseLeftGrid ->
+        UserMovedMouseOutOfPianoRoll ->
             ( { model | mousePosition = Nothing }
             , Cmd.none
             )
 
-        PianoNoteClicked note ->
+        UserClickedPianoKey note ->
             ( model, Ports.playNote note )
 
-        NoteAdded coordinate ->
+        UserClickedPianoRoll coordinate ->
             let
                 newNoteEvent : Music.NoteEvent
                 newNoteEvent =
@@ -107,7 +112,7 @@ update msg model =
             , Ports.playNote midiPitch
             )
 
-        NoteRemoved coordinate ->
+        UserRightClickedPianoRoll coordinate ->
             let
                 noteEvent : Music.NoteEvent
                 noteEvent =
@@ -124,32 +129,32 @@ update msg model =
             , Cmd.none
             )
 
-        PlaySong ->
+        UserClickedPlayButton ->
             ( model, Ports.playSong model.song )
 
-        SaveSong ->
+        UserClickedSaveButton ->
             ( { model
                 | showSaveModal = True
               }
-            , Task.attempt FileNameInputFocused (Browser.Dom.focus "filename-input")
+            , Task.attempt AppFocusedOnFileNameField (Browser.Dom.focus "filename-input")
             )
 
-        FileNameInputFocused _ ->
+        AppFocusedOnFileNameField _ ->
             ( model, Cmd.none )
 
-        LoadSong ->
-            ( model, File.Select.file [ "text/shidi" ] SongFileSelected )
+        UserClickedLoadButton ->
+            ( model, File.Select.file [ "text/shidi" ] UserSelectedFile )
 
-        SongFileSelected file ->
+        UserSelectedFile file ->
             ( { model
                 | fileName =
                     File.name file
                         |> String.dropRight (String.length ".shidi")
               }
-            , File.Load.load SongFileLoaded file
+            , File.Load.load AppLoadedFile file
             )
 
-        SongFileLoaded result ->
+        AppLoadedFile result ->
             case result of
                 Ok song ->
                     ( { model | song = song }, Cmd.none )
@@ -157,15 +162,15 @@ update msg model =
                 Err error ->
                     ( model, Cmd.none )
 
-        SaveSongConfirmed ->
+        UserClickedModalSaveButton ->
             ( { model | showSaveModal = False }
             , File.Save.save model.fileName model.song
             )
 
-        TypedIntoNameField newFileName ->
+        UserTypedIntoNameField newFileName ->
             ( { model | fileName = newFileName }, Cmd.none )
 
-        DismissedSaveModal ->
+        UserDismissedSaveModal ->
             ( { model | showSaveModal = False }
             , Cmd.none
             )
@@ -176,14 +181,14 @@ view model =
     { title = "shidi"
     , body =
         [ Html.div [ Attr.class "row" ]
-            [ Piano.view PianoNoteClicked
+            [ Piano.view UserClickedPianoKey
             , Html.div
                 [ Attr.class "piano-roll__wrapper" ]
                 [ PianoRoll.view
-                    { onMouseMove = MouseMovedOverGrid
-                    , onMouseLeave = MouseLeftGrid
-                    , onLeftClick = NoteAdded
-                    , onRightClick = NoteRemoved
+                    { onMouseMove = UserMovedMouseOverPianoRoll
+                    , onMouseLeave = UserMovedMouseOutOfPianoRoll
+                    , onLeftClick = UserClickedPianoRoll
+                    , onRightClick = UserRightClickedPianoRoll
                     }
                 , viewNotes model.song
                 , case model.mousePosition of
@@ -211,16 +216,16 @@ viewFileSaveDialog model =
         Html.div []
             [ Html.div
                 [ Attr.class "modal-dismiss"
-                , Html.Events.onClick DismissedSaveModal
+                , Html.Events.onClick UserDismissedSaveModal
                 ]
                 []
             , Html.form
                 [ Attr.class "modal"
-                , Html.Events.onSubmit SaveSongConfirmed
+                , Html.Events.onSubmit UserClickedModalSaveButton
                 ]
                 [ Html.input
                     [ Attr.type_ "text"
-                    , Html.Events.onInput TypedIntoNameField
+                    , Html.Events.onInput UserTypedIntoNameField
                     , Attr.value model.fileName
                     , Attr.id "filename-input"
                     ]
@@ -239,7 +244,7 @@ viewPlayButton : Html Msg
 viewPlayButton =
     Html.button
         [ Attr.class "play-button"
-        , Html.Events.onClick PlaySong
+        , Html.Events.onClick UserClickedPlayButton
         ]
         [ Html.text "Play" ]
 
@@ -248,7 +253,7 @@ viewSaveButton : Html Msg
 viewSaveButton =
     Html.button
         [ Attr.class "save-button"
-        , Html.Events.onClick SaveSong
+        , Html.Events.onClick UserClickedSaveButton
         ]
         [ Html.text "Save" ]
 
@@ -257,7 +262,7 @@ viewLoadButton : Html Msg
 viewLoadButton =
     Html.button
         [ Attr.class "load-button"
-        , Html.Events.onClick LoadSong
+        , Html.Events.onClick UserClickedLoadButton
         ]
         [ Html.text "Load" ]
 
