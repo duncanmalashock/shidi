@@ -4,12 +4,12 @@ import Json.Decode
 import Json.Encode
 import MidiEvent
 import Music
-import Song exposing (Song)
+import Project
 
 
-encode : Song -> Json.Encode.Value
-encode song =
-    Json.Encode.list noteToJson (Song.notes song)
+encode : Project.Project -> Json.Encode.Value
+encode project =
+    Json.Encode.list noteToJson (Project.noteEvents project)
 
 
 noteToJson : Music.NoteEvent -> Json.Encode.Value
@@ -25,10 +25,10 @@ noteToJson noteEvent =
         ]
 
 
-decoder : Json.Decode.Decoder Song
+decoder : Json.Decode.Decoder Project.Project
 decoder =
     notesDecoder
-        |> Json.Decode.map Song.new
+        |> Json.Decode.map Project.new
 
 
 notesDecoder : Json.Decode.Decoder (List Music.NoteEvent)

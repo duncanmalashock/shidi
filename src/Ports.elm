@@ -3,7 +3,7 @@ port module Ports exposing (playNote, playSong)
 import Json.Encode
 import MidiEvent
 import Music
-import Song
+import Project
 
 
 port outgoing :
@@ -21,8 +21,8 @@ playNote noteNumber =
         }
 
 
-playSong : Song.Song -> Cmd msg
-playSong song =
+playSong : Project.Project -> Cmd msg
+playSong project =
     let
         noteToJson : Music.NoteEvent -> Json.Encode.Value
         noteToJson noteEvent =
@@ -39,6 +39,6 @@ playSong song =
     outgoing
         { tag = "playSong"
         , data =
-            Song.notes song
+            Project.noteEvents project
                 |> Json.Encode.list noteToJson
         }

@@ -16,7 +16,7 @@ import Music
 import Piano
 import PianoRoll
 import Ports
-import Song
+import Project
 import Task
 
 
@@ -32,7 +32,7 @@ main =
 
 type alias Model =
     { mousePosition : Maybe Coordinate.Pixels
-    , song : Song.Song
+    , project : Project.Project
     , fileName : String
     , showSaveModal : Bool
     }
@@ -48,7 +48,7 @@ init flags =
 initialModel : Model
 initialModel =
     { mousePosition = Nothing
-    , song = Song.empty
+    , project = Project.empty
     , fileName = ""
     , showSaveModal = False
     }
@@ -73,7 +73,7 @@ type Msg
       -- Loading from file
     | UserClickedLoadButton
     | UserSelectedFile File.File
-    | AppLoadedFile (Result Json.Decode.Error Song.Song)
+    | AppLoadedFile (Result Json.Decode.Error Project.Project)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -106,8 +106,8 @@ update msg model =
                         |> .pitch
             in
             ( { model
-                | song =
-                    Song.addNote newNoteEvent model.song
+                | project =
+                    Project.addNote newNoteEvent model.project
               }
             , Ports.playNote midiPitch
             )
@@ -121,16 +121,16 @@ update msg model =
                         |> Coordinate.fromMusicToNoteEvent
             in
             ( { model
-                | song =
-                    Song.removeNote
+                | project =
+                    Project.removeNote
                         noteEvent
-                        model.song
+                        model.project
               }
             , Cmd.none
             )
 
         UserClickedPlayButton ->
-            ( model, Ports.playSong model.song )
+            ( model, Ports.playSong model.project )
 
         UserClickedSaveButton ->
             ( { model
@@ -156,15 +156,15 @@ update msg model =
 
         AppLoadedFile result ->
             case result of
-                Ok song ->
-                    ( { model | song = song }, Cmd.none )
+                Ok project ->
+                    ( { model | project = project }, Cmd.none )
 
                 Err error ->
                     ( model, Cmd.none )
 
         UserClickedModalSaveButton ->
             ( { model | showSaveModal = False }
-            , File.Save.save model.fileName model.song
+            , File.Save.save model.fileName model.project
             )
 
         UserTypedIntoNameField newFileName ->
@@ -190,7 +190,7 @@ view model =
                     , onLeftClick = UserClickedPianoRoll
                     , onRightClick = UserRightClickedPianoRoll
                     }
-                , viewNotes model.song
+                , viewNotes model.project
                 , case model.mousePosition of
                     Just coordinate ->
                         viewNote "mediumseagreen"
@@ -267,9 +267,9 @@ viewLoadButton =
         [ Html.text "Load" ]
 
 
-viewNotes : Song.Song -> Html Msg
-viewNotes song =
-    Song.notes song
+viewNotes : Project.Project -> Html Msg
+viewNotes project =
+    Project.noteEvents project
         |> List.map (viewNote "deeppink")
         |> Html.div []
 
