@@ -1,7 +1,7 @@
 module File.Save exposing (save)
 
 import File.Download
-import File.Version.Version0
+import File.Version.V0
 import Json.Encode
 import Song
 
@@ -14,4 +14,4 @@ save fileName song =
 
 encode : Song.Song -> Json.Encode.Value
 encode song =
-    File.Version.Version0.encode song
+    File.Version.V0.encode song

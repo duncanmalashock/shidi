@@ -1,7 +1,7 @@
 module File.Load exposing (load)
 
 import File
-import File.Version.Version0
+import File.Version.V0
 import Json.Decode
 import Song
 import Task
@@ -27,5 +27,5 @@ decode jsonString =
 
 decoders : List (Json.Decode.Decoder Song.Song)
 decoders =
-    [ File.Version.Version0.decoder
+    [ File.Version.V0.decoder
     ]
