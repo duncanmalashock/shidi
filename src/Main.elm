@@ -10,10 +10,6 @@ import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events
 import Json.Decode
-import Music
-import Music.Key
-import Music.Meter
-import Music.Tempo
 import Piano
 import PianoRoll
 import Ports
@@ -36,7 +32,6 @@ type alias Model =
     , song : Song.Song
     , fileName : String
     , showSaveModal : Bool
-    , music : Music.Music
     }
 
 
@@ -53,12 +48,6 @@ initialModel =
     , song = Song.empty
     , fileName = ""
     , showSaveModal = False
-    , music =
-        Music.new
-            { key = Music.Key.c
-            , meter = Music.Meter.fourFour
-            , tempo = Music.Tempo.allegro
-            }
     }
 
 
