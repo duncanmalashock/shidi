@@ -1,7 +1,7 @@
 module File.Save exposing (save)
 
 import File.Download
-import File.Version.V0
+import File.Version.V1
 import Json.Encode
 import Project
 
@@ -14,4 +14,4 @@ save fileName project =
 
 encode : Project.Project -> Json.Encode.Value
 encode project =
-    File.Version.V0.encode project
+    File.Version.V1.encode project
