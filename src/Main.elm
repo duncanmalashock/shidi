@@ -67,13 +67,13 @@ type Msg
       -- Saving to file
     | UserClickedSaveButton
     | UserClickedModalSaveButton
-    | AppFocusedOnFileNameField (Result Browser.Dom.Error ())
+    | BrowserFocusedOnFileNameField (Result Browser.Dom.Error ())
     | UserTypedIntoNameField String
     | UserDismissedSaveModal
       -- Loading from file
     | UserClickedLoadButton
     | UserSelectedFile File.File
-    | AppLoadedFile (Result Json.Decode.Error Project.Project)
+    | BrowserLoadedFile (Result Json.Decode.Error Project.Project)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -134,10 +134,10 @@ update msg model =
             ( { model
                 | showSaveModal = True
               }
-            , Task.attempt AppFocusedOnFileNameField (Browser.Dom.focus "filename-input")
+            , Task.attempt BrowserFocusedOnFileNameField (Browser.Dom.focus "filename-input")
             )
 
-        AppFocusedOnFileNameField _ ->
+        BrowserFocusedOnFileNameField _ ->
             ( model, Cmd.none )
 
         UserClickedLoadButton ->
@@ -149,10 +149,10 @@ update msg model =
                     File.name file
                         |> String.dropRight (String.length ".shidi")
               }
-            , File.Load.load AppLoadedFile file
+            , File.Load.load BrowserLoadedFile file
             )
 
-        AppLoadedFile result ->
+        BrowserLoadedFile result ->
             case result of
                 Ok project ->
                     ( { model | project = project }, Cmd.none )
@@ -192,13 +192,13 @@ view model =
             , viewSaveButton
             , viewLoadButton
             ]
-        , viewFileSaveDialog model
+        , viewFileSaveModal model
         ]
     }
 
 
-viewFileSaveDialog : Model -> Html Msg
-viewFileSaveDialog model =
+viewFileSaveModal : Model -> Html Msg
+viewFileSaveModal model =
     if model.showSaveModal then
         Html.div []
             [ Html.div
