@@ -1,33 +1,118 @@
-module PianoRoll exposing (view)
+module PianoRoll exposing
+    ( Model, init
+    , Msg, update, OutMsg(..)
+    , view
+    )
 
-import Coordinate
+{-|
+
+@docs Model, init
+
+@docs Msg, update, OutMsg
+
+@docs view
+
+-}
+
 import Html exposing (Html)
-import Html.Attributes as Attr
+import Html.Attributes
 import Html.Events
 import Json.Decode
+import MidiEvent
 import Music
+import PianoRoll.Coordinate
 import PianoRoll.Key
 import Project
 
 
+type Model
+    = Model
+        { mousePosition : Maybe PianoRoll.Coordinate.Music
+        }
+
+
+init : Model
+init =
+    Model
+        { mousePosition = Nothing
+        }
+
+
+type Msg
+    = UserMovedMouseOverGrid PianoRoll.Coordinate.Music
+    | UserMovedMouseAway
+    | UserClickedLeftMouseButton PianoRoll.Coordinate.Music
+    | UserClickedRightMouseButton PianoRoll.Coordinate.Music
+
+
+type OutMsg
+    = AddNoteEvent Music.NoteEvent Int
+    | RemoveNoteEvent Music.NoteEvent
+
+
+update : Msg -> Model -> ( Model, Maybe OutMsg )
+update msg (Model model) =
+    case msg of
+        UserMovedMouseOverGrid newPosition ->
+            ( Model
+                { model
+                    | mousePosition = Just newPosition
+                }
+            , Nothing
+            )
+
+        UserMovedMouseAway ->
+            ( Model
+                { model
+                    | mousePosition = Nothing
+                }
+            , Nothing
+            )
+
+        UserClickedLeftMouseButton coordinate ->
+            let
+                noteEvent : Music.NoteEvent
+                noteEvent =
+                    PianoRoll.Coordinate.fromMusicToNoteEvent coordinate
+            in
+            ( Model model
+            , Just
+                (AddNoteEvent
+                    noteEvent
+                    (MidiEvent.fromNoteEvent noteEvent |> .pitch)
+                )
+            )
+
+        UserClickedRightMouseButton coordinate ->
+            let
+                noteEvent : Music.NoteEvent
+                noteEvent =
+                    PianoRoll.Coordinate.fromMusicToNoteEvent coordinate
+            in
+            ( Model model
+            , Just (RemoveNoteEvent noteEvent)
+            )
+
+
 view :
-    { onMouseMove : Coordinate.Music -> msg
-    , onMouseLeave : msg
-    , onLeftClick : Coordinate.Music -> msg
-    , onRightClick : Coordinate.Music -> msg
-    , project : Project.Project
-    , mousePosition : Maybe Coordinate.Music
+    { project : Project.Project
+    , model : Model
+    , toMsg : Msg -> msg
     }
     -> Html msg
 view options =
+    let
+        (Model model) =
+            options.model
+    in
     Html.div
-        [ Attr.class "piano-roll__wrapper" ]
+        [ Html.Attributes.class "piano-roll__wrapper" ]
         [ viewRoll options
         , viewNotes options.project
-        , case options.mousePosition of
+        , case model.mousePosition of
             Just coordinate ->
                 viewNote "mediumseagreen"
-                    (Coordinate.fromMusicToNoteEvent coordinate)
+                    (PianoRoll.Coordinate.fromMusicToNoteEvent coordinate)
 
             Nothing ->
                 Html.text ""
@@ -35,31 +120,20 @@ view options =
 
 
 viewRoll :
-    { a
-        | onMouseMove : Coordinate.Music -> msg
-        , onMouseLeave : msg
-        , onLeftClick : Coordinate.Music -> msg
-        , onRightClick : Coordinate.Music -> msg
+    { project : Project.Project
+    , model : Model
+    , toMsg : Msg -> msg
     }
     -> Html msg
 viewRoll options =
-    let
-        mouseEventAttributes : List (Html.Attribute msg)
-        mouseEventAttributes =
-            mouseEvents
-                { onMouseMove = options.onMouseMove
-                , onMouseLeave = options.onMouseLeave
-                , onLeftClick = options.onLeftClick
-                , onRightClick = options.onRightClick
-                }
-    in
     Html.div
-        ([ Attr.class "piano-roll"
-         , Attr.style "background-image" (backgroundImageAttr { height = 21 })
+        ([ Html.Attributes.class "piano-roll"
+         , Html.Attributes.style "background-image" (backgroundImageAttr { height = 21 })
          ]
-            ++ mouseEventAttributes
+            ++ mouseEvents
         )
         []
+        |> Html.map options.toMsg
 
 
 viewNotes : Project.Project -> Html msg
@@ -74,14 +148,14 @@ viewNote color noteEvent =
     let
         { x, y } =
             noteEvent
-                |> Coordinate.fromNoteEventToMusic
-                |> Coordinate.fromMusicToPixels
-                |> Coordinate.pixelsXY
+                |> PianoRoll.Coordinate.fromNoteEventToMusic
+                |> PianoRoll.Coordinate.fromMusicToPixels
+                |> PianoRoll.Coordinate.pixelsXY
     in
     Html.div
-        [ Attr.class "note-preview"
-        , Attr.style "background" color
-        , Attr.style "transform"
+        [ Html.Attributes.class "note-preview"
+        , Html.Attributes.style "background" color
+        , Html.Attributes.style "transform"
             ("translate($x, $y)"
                 |> String.replace "$x" (String.fromInt x ++ "px")
                 |> String.replace "$y" (String.fromInt y ++ "px")
@@ -90,37 +164,31 @@ viewNote color noteEvent =
         []
 
 
-mouseEvents :
-    { onMouseMove : Coordinate.Music -> msg
-    , onMouseLeave : msg
-    , onLeftClick : Coordinate.Music -> msg
-    , onRightClick : Coordinate.Music -> msg
-    }
-    -> List (Html.Attribute msg)
-mouseEvents options =
+mouseEvents : List (Html.Attribute Msg)
+mouseEvents =
     let
-        onMouseMove : Html.Attribute msg
+        onMouseMove : Html.Attribute Msg
         onMouseMove =
             Html.Events.on "mousemove"
                 (offsetDecoder
-                    |> Json.Decode.map Coordinate.fromPixelsToMusic
-                    |> Json.Decode.map options.onMouseMove
+                    |> Json.Decode.map PianoRoll.Coordinate.fromPixelsToMusic
+                    |> Json.Decode.map UserMovedMouseOverGrid
                 )
 
-        onMouseUp : Html.Attribute msg
+        onMouseUp : Html.Attribute Msg
         onMouseUp =
             Html.Events.on "mouseup"
                 (Json.Decode.andThen
                     (\mouseButton ->
                         if mouseButton == 0 then
                             offsetDecoder
-                                |> Json.Decode.map Coordinate.fromPixelsToMusic
-                                |> Json.Decode.map options.onLeftClick
+                                |> Json.Decode.map PianoRoll.Coordinate.fromPixelsToMusic
+                                |> Json.Decode.map UserClickedLeftMouseButton
 
                         else if mouseButton == 2 then
                             offsetDecoder
-                                |> Json.Decode.map Coordinate.fromPixelsToMusic
-                                |> Json.Decode.map options.onRightClick
+                                |> Json.Decode.map PianoRoll.Coordinate.fromPixelsToMusic
+                                |> Json.Decode.map UserClickedRightMouseButton
 
                         else
                             Json.Decode.fail "bad witch club 🧙\u{200D}♀️"
@@ -128,16 +196,16 @@ mouseEvents options =
                     (Json.Decode.field "button" Json.Decode.int)
                 )
 
-        offsetDecoder : Json.Decode.Decoder Coordinate.Pixels
+        offsetDecoder : Json.Decode.Decoder PianoRoll.Coordinate.Pixels
         offsetDecoder =
             Json.Decode.map2
-                Coordinate.pixels
+                PianoRoll.Coordinate.pixels
                 (Json.Decode.field "offsetX" Json.Decode.int)
                 (Json.Decode.field "offsetY" Json.Decode.int)
     in
     [ onMouseMove
     , onMouseUp
-    , Html.Events.onMouseLeave options.onMouseLeave
+    , Html.Events.onMouseLeave UserMovedMouseAway
     ]
 
 

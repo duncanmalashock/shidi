@@ -2,7 +2,6 @@ module Main exposing (main)
 
 import Browser
 import Browser.Dom
-import Coordinate
 import File
 import File.Load
 import File.Save
@@ -11,8 +10,6 @@ import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events
 import Json.Decode
-import MidiEvent
-import Music
 import Piano
 import PianoRoll
 import Ports
@@ -31,10 +28,10 @@ main =
 
 
 type alias Model =
-    { mousePosition : Maybe Coordinate.Music
-    , project : Project.Project
+    { project : Project.Project
     , fileName : String
     , showSaveModal : Bool
+    , pianoRoll : PianoRoll.Model
     }
 
 
@@ -47,10 +44,10 @@ init flags =
 
 initialModel : Model
 initialModel =
-    { mousePosition = Nothing
-    , project = Project.empty
+    { project = Project.empty
     , fileName = ""
     , showSaveModal = False
+    , pianoRoll = PianoRoll.init
     }
 
 
@@ -58,10 +55,7 @@ type Msg
     = -- Piano keys
       UserClickedPianoKey Int
       -- Piano roll
-    | UserMovedMouseOverPianoRoll Coordinate.Music
-    | UserMovedMouseOutOfPianoRoll
-    | UserClickedPianoRoll Coordinate.Music
-    | UserRightClickedPianoRoll Coordinate.Music
+    | PianoRollMsg PianoRoll.Msg
       -- Playback
     | UserClickedPlayButton
       -- Saving to file
@@ -79,52 +73,36 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        UserMovedMouseOverPianoRoll position ->
-            ( { model | mousePosition = Just position }
-            , Cmd.none
-            )
-
-        UserMovedMouseOutOfPianoRoll ->
-            ( { model | mousePosition = Nothing }
-            , Cmd.none
-            )
-
         UserClickedPianoKey note ->
             ( model, Ports.playNote note )
 
-        UserClickedPianoRoll coordinate ->
+        PianoRollMsg pianoRollMsg ->
             let
-                newNoteEvent : Music.NoteEvent
-                newNoteEvent =
-                    coordinate
-                        |> Coordinate.fromMusicToNoteEvent
+                ( pianoRoll, maybeOutMsg ) =
+                    PianoRoll.update pianoRollMsg model.pianoRoll
 
-                midiPitch : Int
-                midiPitch =
-                    MidiEvent.fromNoteEvent newNoteEvent
-                        |> .pitch
+                { cmd, updatedProject } =
+                    case maybeOutMsg of
+                        Just (PianoRoll.AddNoteEvent noteEvent midiPitch) ->
+                            { cmd = Ports.playNote midiPitch
+                            , updatedProject = Project.addNote noteEvent model.project
+                            }
+
+                        Just (PianoRoll.RemoveNoteEvent noteEvent) ->
+                            { cmd = Cmd.none
+                            , updatedProject = Project.removeNote noteEvent model.project
+                            }
+
+                        Nothing ->
+                            { cmd = Cmd.none
+                            , updatedProject = model.project
+                            }
             in
             ( { model
-                | project =
-                    Project.addNote newNoteEvent model.project
+                | pianoRoll = pianoRoll
+                , project = updatedProject
               }
-            , Ports.playNote midiPitch
-            )
-
-        UserRightClickedPianoRoll coordinate ->
-            let
-                noteEvent : Music.NoteEvent
-                noteEvent =
-                    coordinate
-                        |> Coordinate.fromMusicToNoteEvent
-            in
-            ( { model
-                | project =
-                    Project.removeNote
-                        noteEvent
-                        model.project
-              }
-            , Cmd.none
+            , cmd
             )
 
         UserClickedPlayButton ->
@@ -181,12 +159,9 @@ view model =
         [ Html.div [ Attr.class "row" ]
             [ Piano.view UserClickedPianoKey
             , PianoRoll.view
-                { onMouseMove = UserMovedMouseOverPianoRoll
-                , onMouseLeave = UserMovedMouseOutOfPianoRoll
-                , onLeftClick = UserClickedPianoRoll
-                , onRightClick = UserRightClickedPianoRoll
-                , project = model.project
-                , mousePosition = model.mousePosition
+                { project = model.project
+                , model = model.pianoRoll
+                , toMsg = PianoRollMsg
                 }
             , viewPlayButton
             , viewSaveButton

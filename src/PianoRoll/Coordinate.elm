@@ -1,4 +1,4 @@
-module Coordinate exposing
+module PianoRoll.Coordinate exposing
     ( Pixels, pixels
     , pixelsXY
     , Music
