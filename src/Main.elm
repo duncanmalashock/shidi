@@ -7,7 +7,7 @@ import File.Load
 import File.Save
 import File.Select
 import Html exposing (Html)
-import Html.Attributes as Attr
+import Html.Attributes
 import Html.Events
 import Json.Decode
 import Piano
@@ -156,7 +156,7 @@ view : Model -> { title : String, body : List (Html Msg) }
 view model =
     { title = "shidi"
     , body =
-        [ Html.div [ Attr.class "row" ]
+        [ Html.div [ Html.Attributes.class "row" ]
             [ Piano.view UserClickedPianoKey
             , PianoRoll.view
                 { project = model.project
@@ -177,19 +177,19 @@ viewFileSaveModal model =
     if model.showSaveModal then
         Html.div []
             [ Html.div
-                [ Attr.class "modal-dismiss"
+                [ Html.Attributes.class "modal-dismiss"
                 , Html.Events.onClick UserDismissedSaveModal
                 ]
                 []
             , Html.form
-                [ Attr.class "modal"
+                [ Html.Attributes.class "modal"
                 , Html.Events.onSubmit UserClickedModalSaveButton
                 ]
                 [ Html.input
-                    [ Attr.type_ "text"
+                    [ Html.Attributes.type_ "text"
                     , Html.Events.onInput UserTypedIntoNameField
-                    , Attr.value model.fileName
-                    , Attr.id "filename-input"
+                    , Html.Attributes.value model.fileName
+                    , Html.Attributes.id "filename-input"
                     ]
                     []
                 , Html.button
@@ -205,7 +205,7 @@ viewFileSaveModal model =
 viewPlayButton : Html Msg
 viewPlayButton =
     Html.button
-        [ Attr.class "play-button"
+        [ Html.Attributes.class "play-button"
         , Html.Events.onClick UserClickedPlayButton
         ]
         [ Html.text "Play" ]
@@ -214,7 +214,7 @@ viewPlayButton =
 viewSaveButton : Html Msg
 viewSaveButton =
     Html.button
-        [ Attr.class "save-button"
+        [ Html.Attributes.class "save-button"
         , Html.Events.onClick UserClickedSaveButton
         ]
         [ Html.text "Save" ]
@@ -223,7 +223,7 @@ viewSaveButton =
 viewLoadButton : Html Msg
 viewLoadButton =
     Html.button
-        [ Attr.class "load-button"
+        [ Html.Attributes.class "load-button"
         , Html.Events.onClick UserClickedLoadButton
         ]
         [ Html.text "Load" ]
