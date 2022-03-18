@@ -20,14 +20,26 @@ import Html.Events
 import Json.Decode
 import MidiEvent
 import Music
-import PianoRoll.Coordinate
+import Music.Duration
+import Music.Note
+import Music.Pitch
 import PianoRoll.Key
 import Project
 
 
+cellSizeX : Int
+cellSizeX =
+    21
+
+
+cellSizeY : Int
+cellSizeY =
+    21
+
+
 type Model
     = Model
-        { mousePosition : Maybe PianoRoll.Coordinate.Music
+        { mousePosition : Maybe MusicCoordinate
         }
 
 
@@ -39,10 +51,10 @@ init =
 
 
 type Msg
-    = UserMovedMouseOverGrid PianoRoll.Coordinate.Music
+    = UserMovedMouseOverGrid MusicCoordinate
     | UserMovedMouseAway
-    | UserClickedLeftMouseButton PianoRoll.Coordinate.Music
-    | UserClickedRightMouseButton PianoRoll.Coordinate.Music
+    | UserClickedLeftMouseButton MusicCoordinate
+    | UserClickedRightMouseButton MusicCoordinate
 
 
 type OutMsg
@@ -73,7 +85,7 @@ update msg (Model model) =
             let
                 noteEvent : Music.NoteEvent
                 noteEvent =
-                    PianoRoll.Coordinate.fromMusicToNoteEvent coordinate
+                    fromMusicToNoteEvent coordinate
             in
             ( Model model
             , Just
@@ -87,7 +99,7 @@ update msg (Model model) =
             let
                 noteEvent : Music.NoteEvent
                 noteEvent =
-                    PianoRoll.Coordinate.fromMusicToNoteEvent coordinate
+                    fromMusicToNoteEvent coordinate
             in
             ( Model model
             , Just (RemoveNoteEvent noteEvent)
@@ -112,7 +124,7 @@ view options =
         , case model.mousePosition of
             Just coordinate ->
                 viewNote "mediumseagreen"
-                    (PianoRoll.Coordinate.fromMusicToNoteEvent coordinate)
+                    (fromMusicToNoteEvent coordinate)
 
             Nothing ->
                 Html.text ""
@@ -128,7 +140,10 @@ viewRoll :
 viewRoll options =
     Html.div
         ([ Html.Attributes.class "piano-roll"
-         , Html.Attributes.style "background-image" (backgroundImageAttr { height = 21 })
+         , Html.Attributes.style "background-image"
+            (backgroundImageAttr
+                { width = cellSizeX, height = cellSizeY }
+            )
          ]
             ++ mouseEvents
         )
@@ -147,14 +162,22 @@ viewNote : String -> Music.NoteEvent -> Html msg
 viewNote color noteEvent =
     let
         { x, y } =
-            noteEvent
-                |> PianoRoll.Coordinate.fromNoteEventToMusic
-                |> PianoRoll.Coordinate.fromMusicToPixels
-                |> PianoRoll.Coordinate.pixelsXY
+            MusicCoordinate noteEvent.at (Music.Note.pitch noteEvent.value)
+                |> fromMusicToPixels
+
+        width : Int
+        width =
+            cellSizeX
+
+        height : Int
+        height =
+            cellSizeY
     in
     Html.div
         [ Html.Attributes.class "note-preview"
         , Html.Attributes.style "background" color
+        , Html.Attributes.style "width" (String.fromInt width ++ "px")
+        , Html.Attributes.style "height" (String.fromInt height ++ "px")
         , Html.Attributes.style "transform"
             ("translate($x, $y)"
                 |> String.replace "$x" (String.fromInt x ++ "px")
@@ -171,7 +194,7 @@ mouseEvents =
         onMouseMove =
             Html.Events.on "mousemove"
                 (offsetDecoder
-                    |> Json.Decode.map PianoRoll.Coordinate.fromPixelsToMusic
+                    |> Json.Decode.map fromPixelsToMusic
                     |> Json.Decode.map UserMovedMouseOverGrid
                 )
 
@@ -182,12 +205,12 @@ mouseEvents =
                     (\mouseButton ->
                         if mouseButton == 0 then
                             offsetDecoder
-                                |> Json.Decode.map PianoRoll.Coordinate.fromPixelsToMusic
+                                |> Json.Decode.map fromPixelsToMusic
                                 |> Json.Decode.map UserClickedLeftMouseButton
 
                         else if mouseButton == 2 then
                             offsetDecoder
-                                |> Json.Decode.map PianoRoll.Coordinate.fromPixelsToMusic
+                                |> Json.Decode.map fromPixelsToMusic
                                 |> Json.Decode.map UserClickedRightMouseButton
 
                         else
@@ -196,10 +219,10 @@ mouseEvents =
                     (Json.Decode.field "button" Json.Decode.int)
                 )
 
-        offsetDecoder : Json.Decode.Decoder PianoRoll.Coordinate.Pixels
+        offsetDecoder : Json.Decode.Decoder PixelCoordinate
         offsetDecoder =
             Json.Decode.map2
-                PianoRoll.Coordinate.pixels
+                PixelCoordinate
                 (Json.Decode.field "offsetX" Json.Decode.int)
                 (Json.Decode.field "offsetY" Json.Decode.int)
     in
@@ -209,20 +232,20 @@ mouseEvents =
     ]
 
 
-backgroundImageAttr : { height : Int } -> String
+backgroundImageAttr : { height : Int, width : Int } -> String
 backgroundImageAttr options =
     gridBackground
         |> String.replace "$keys" (PianoRoll.Key.view options.height)
         |> String.replace "$verticalLines"
             (List.range 0 4
-                |> List.map (viewVerticalLine options.height)
+                |> List.map (viewVerticalLine options)
                 |> String.join ""
             )
         |> String.replace "$totalHeight" (String.fromInt (12 * options.height))
         |> String.replace "$midSplit" (String.fromInt (7 * options.height))
         |> String.replace "$verticalLineColor" "#fff5"
         |> String.replace "$horizontalLineColor" "#fff2"
-        |> String.replace "$width" (String.fromInt (4 * options.height))
+        |> String.replace "$width" (String.fromInt (4 * options.width))
         |> String.replace "\n" ""
         |> String.replace "#" "%23"
         |> wrapInUrl
@@ -233,10 +256,10 @@ wrapInUrl input =
     "url('data:image/svg+xml," ++ input ++ "')"
 
 
-viewVerticalLine : Int -> Int -> String
-viewVerticalLine height index =
+viewVerticalLine : { height : Int, width : Int } -> Int -> String
+viewVerticalLine { width, height } index =
     """<line x1="$x" y1="0" x2="$x" y2="$totalHeight" stroke="$verticalLineColor" />"""
-        |> String.replace "$x" (String.fromInt (height * index))
+        |> String.replace "$x" (String.fromInt (width * index))
         |> String.replace "$totalHeight" (String.fromInt (12 * height))
 
 
@@ -255,3 +278,58 @@ gridBackground =
   </g>
 </svg>
     """
+
+
+
+-- Coordinate conversions
+
+
+type alias PixelCoordinate =
+    { x : Int, y : Int }
+
+
+type alias MusicCoordinate =
+    { at : Music.Duration.Duration
+    , pitch : Music.Pitch.Pitch
+    }
+
+
+pixelsXToStart : Int -> Music.Duration.Duration
+pixelsXToStart x =
+    Music.Duration.multiplyByInt (x // cellSizeX) Music.Duration.quarter
+
+
+startToPixelsX : Music.Duration.Duration -> Int
+startToPixelsX duration =
+    Basics.round (Music.Duration.toFloat duration * 4) * cellSizeX
+
+
+pixelsYToPitch : Int -> Music.Pitch.Pitch
+pixelsYToPitch y =
+    (131 - (y // cellSizeY))
+        |> Music.Pitch.fromMIDINoteNumber
+
+
+pitchToPixelsY : Music.Pitch.Pitch -> Int
+pitchToPixelsY pitch =
+    (131 - Music.Pitch.toMIDINoteNumber pitch)
+        * cellSizeY
+
+
+fromPixelsToMusic : PixelCoordinate -> MusicCoordinate
+fromPixelsToMusic { x, y } =
+    MusicCoordinate (pixelsXToStart x) (pixelsYToPitch y)
+
+
+fromMusicToPixels : MusicCoordinate -> PixelCoordinate
+fromMusicToPixels { at, pitch } =
+    { x = startToPixelsX at
+    , y = pitchToPixelsY pitch
+    }
+
+
+fromMusicToNoteEvent : MusicCoordinate -> Music.NoteEvent
+fromMusicToNoteEvent { at, pitch } =
+    { at = at
+    , value = Music.Note.quarter pitch
+    }

@@ -11,6 +11,7 @@ keysInOctave =
     12
 
 
+whiteKeyHeight : Int
 whiteKeyHeight =
     octaveHeight // whiteKeysInOctave
 
