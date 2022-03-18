@@ -27,19 +27,53 @@ import PianoRoll.Piano
 import Project
 
 
-cellSizeX : Int
-cellSizeX =
-    21
+type ScaleX
+    = ScaleXSmall
+    | ScaleXMedium
+    | ScaleXLarge
+    | ScaleXGiant
 
 
-cellSizeY : Int
-cellSizeY =
-    21
+cellSizeX : ScaleX -> Int
+cellSizeX scaleX =
+    case scaleX of
+        ScaleXSmall ->
+            14
+
+        ScaleXMedium ->
+            21
+
+        ScaleXLarge ->
+            36
+
+        ScaleXGiant ->
+            50
+
+
+type ScaleY
+    = ScaleYSmall
+    | ScaleYMedium
+    | ScaleYLarge
+
+
+cellSizeY : ScaleY -> Int
+cellSizeY scaleY =
+    case scaleY of
+        ScaleYSmall ->
+            14
+
+        ScaleYMedium ->
+            21
+
+        ScaleYLarge ->
+            28
 
 
 type Model
     = Model
         { mousePosition : Maybe MusicCoordinate
+        , scaleX : ScaleX
+        , scaleY : ScaleY
         }
 
 
@@ -47,6 +81,8 @@ init : Model
 init =
     Model
         { mousePosition = Nothing
+        , scaleX = ScaleXMedium
+        , scaleY = ScaleYMedium
         }
 
 
@@ -121,7 +157,9 @@ view options =
             options.model
     in
     Html.div [ Html.Attributes.class "row" ]
-        [ PianoRoll.Piano.view options.onPianoKeyClick
+        [ PianoRoll.Piano.view
+            (cellSizeY model.scaleY)
+            options.onPianoKeyClick
         , viewRollWrapper
             { project = options.project
             , model = options.model
@@ -144,10 +182,15 @@ viewRollWrapper options =
     Html.div
         [ Html.Attributes.class "piano-roll__wrapper" ]
         [ viewRoll options
-        , viewNotes options.project
+        , viewNotes
+            { project = options.project
+            , model = options.model
+            }
         , case model.mousePosition of
             Just coordinate ->
-                viewNote "mediumseagreen"
+                viewNote
+                    options.model
+                    "mediumseagreen"
                     (fromMusicToNoteEvent coordinate)
 
             Nothing ->
@@ -162,40 +205,46 @@ viewRoll :
     }
     -> Html msg
 viewRoll options =
+    let
+        (Model model) =
+            options.model
+    in
     Html.div
         ([ Html.Attributes.class "piano-roll"
          , Html.Attributes.style "background-image"
             (backgroundImageAttr
-                { width = cellSizeX, height = cellSizeY }
+                { width = cellSizeX model.scaleX
+                , height = cellSizeY model.scaleY
+                }
             )
          ]
-            ++ mouseEvents
+            ++ mouseEvents model.scaleX model.scaleY
         )
         []
         |> Html.map options.toMsg
 
 
-viewNotes : Project.Project -> Html msg
-viewNotes project =
+viewNotes : { project : Project.Project, model : Model } -> Html msg
+viewNotes { project, model } =
     Project.noteEvents project
-        |> List.map (viewNote "deeppink")
+        |> List.map (viewNote model "deeppink")
         |> Html.div []
 
 
-viewNote : String -> Music.NoteEvent -> Html msg
-viewNote color noteEvent =
+viewNote : Model -> String -> Music.NoteEvent -> Html msg
+viewNote (Model model) color noteEvent =
     let
         { x, y } =
             MusicCoordinate noteEvent.at (Music.Note.pitch noteEvent.value)
-                |> fromMusicToPixels
+                |> fromMusicToPixels model.scaleX model.scaleY
 
         width : Int
         width =
-            cellSizeX
+            cellSizeX model.scaleX
 
         height : Int
         height =
-            cellSizeY
+            cellSizeY model.scaleY
     in
     Html.div
         [ Html.Attributes.class "note-preview"
@@ -211,14 +260,14 @@ viewNote color noteEvent =
         []
 
 
-mouseEvents : List (Html.Attribute Msg)
-mouseEvents =
+mouseEvents : ScaleX -> ScaleY -> List (Html.Attribute Msg)
+mouseEvents scaleX scaleY =
     let
         onMouseMove : Html.Attribute Msg
         onMouseMove =
             Html.Events.on "mousemove"
                 (offsetDecoder
-                    |> Json.Decode.map fromPixelsToMusic
+                    |> Json.Decode.map (fromPixelsToMusic scaleX scaleY)
                     |> Json.Decode.map UserMovedMouseOverGrid
                 )
 
@@ -229,12 +278,12 @@ mouseEvents =
                     (\mouseButton ->
                         if mouseButton == 0 then
                             offsetDecoder
-                                |> Json.Decode.map fromPixelsToMusic
+                                |> Json.Decode.map (fromPixelsToMusic scaleX scaleY)
                                 |> Json.Decode.map UserClickedLeftMouseButton
 
                         else if mouseButton == 2 then
                             offsetDecoder
-                                |> Json.Decode.map fromPixelsToMusic
+                                |> Json.Decode.map (fromPixelsToMusic scaleX scaleY)
                                 |> Json.Decode.map UserClickedRightMouseButton
 
                         else
@@ -269,7 +318,7 @@ backgroundImageAttr options =
         |> String.replace "$midSplit" (String.fromInt (7 * options.height))
         |> String.replace "$verticalLineColor" "#fff5"
         |> String.replace "$horizontalLineColor" "#fff2"
-        |> String.replace "$width" (String.fromInt (4 * options.width))
+        |> String.replace "$width" (String.fromInt options.width)
         |> String.replace "\n" ""
         |> String.replace "#" "%23"
         |> wrapInUrl
@@ -318,37 +367,37 @@ type alias MusicCoordinate =
     }
 
 
-pixelsXToStart : Int -> Music.Duration.Duration
-pixelsXToStart x =
-    Music.Duration.multiplyByInt (x // cellSizeX) Music.Duration.quarter
+pixelsXToStart : ScaleX -> Int -> Music.Duration.Duration
+pixelsXToStart scaleX x =
+    Music.Duration.multiplyByInt (x // cellSizeX scaleX) Music.Duration.quarter
 
 
-startToPixelsX : Music.Duration.Duration -> Int
-startToPixelsX duration =
-    Basics.round (Music.Duration.toFloat duration * 4) * cellSizeX
+startToPixelsX : ScaleX -> Music.Duration.Duration -> Int
+startToPixelsX scaleX duration =
+    Basics.round (Music.Duration.toFloat duration * 4) * cellSizeX scaleX
 
 
-pixelsYToPitch : Int -> Music.Pitch.Pitch
-pixelsYToPitch y =
-    (131 - (y // cellSizeY))
+pixelsYToPitch : ScaleY -> Int -> Music.Pitch.Pitch
+pixelsYToPitch scaleY y =
+    (131 - (y // cellSizeY scaleY))
         |> Music.Pitch.fromMIDINoteNumber
 
 
-pitchToPixelsY : Music.Pitch.Pitch -> Int
-pitchToPixelsY pitch =
+pitchToPixelsY : ScaleY -> Music.Pitch.Pitch -> Int
+pitchToPixelsY scaleY pitch =
     (131 - Music.Pitch.toMIDINoteNumber pitch)
-        * cellSizeY
+        * cellSizeY scaleY
 
 
-fromPixelsToMusic : PixelCoordinate -> MusicCoordinate
-fromPixelsToMusic { x, y } =
-    MusicCoordinate (pixelsXToStart x) (pixelsYToPitch y)
+fromPixelsToMusic : ScaleX -> ScaleY -> PixelCoordinate -> MusicCoordinate
+fromPixelsToMusic scaleX scaleY { x, y } =
+    MusicCoordinate (pixelsXToStart scaleX x) (pixelsYToPitch scaleY y)
 
 
-fromMusicToPixels : MusicCoordinate -> PixelCoordinate
-fromMusicToPixels { at, pitch } =
-    { x = startToPixelsX at
-    , y = pitchToPixelsY pitch
+fromMusicToPixels : ScaleX -> ScaleY -> MusicCoordinate -> PixelCoordinate
+fromMusicToPixels scaleX scaleY { at, pitch } =
+    { x = startToPixelsX scaleX at
+    , y = pitchToPixelsY scaleY pitch
     }
 
 
