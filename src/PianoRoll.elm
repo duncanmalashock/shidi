@@ -18,12 +18,12 @@ import Html exposing (Html)
 import Html.Attributes
 import Html.Events
 import Json.Decode
-import MidiEvent
 import Music
 import Music.Duration
 import Music.Note
 import Music.Pitch
 import PianoRoll.Key
+import PianoRoll.Piano
 import Project
 
 
@@ -86,13 +86,15 @@ update msg (Model model) =
                 noteEvent : Music.NoteEvent
                 noteEvent =
                     fromMusicToNoteEvent coordinate
+
+                midiNoteNumber : Int
+                midiNoteNumber =
+                    Music.Note.pitch noteEvent.value
+                        |> Music.Pitch.toMIDINoteNumber
             in
             ( Model model
             , Just
-                (AddNoteEvent
-                    noteEvent
-                    (MidiEvent.fromNoteEvent noteEvent |> .pitch)
-                )
+                (AddNoteEvent noteEvent midiNoteNumber)
             )
 
         UserClickedRightMouseButton coordinate ->
@@ -110,9 +112,31 @@ view :
     { project : Project.Project
     , model : Model
     , toMsg : Msg -> msg
+    , onPianoKeyClick : Int -> msg
     }
     -> Html msg
 view options =
+    let
+        (Model model) =
+            options.model
+    in
+    Html.div [ Html.Attributes.class "row" ]
+        [ PianoRoll.Piano.view options.onPianoKeyClick
+        , viewRollWrapper
+            { project = options.project
+            , model = options.model
+            , toMsg = options.toMsg
+            }
+        ]
+
+
+viewRollWrapper :
+    { project : Project.Project
+    , model : Model
+    , toMsg : Msg -> msg
+    }
+    -> Html msg
+viewRollWrapper options =
     let
         (Model model) =
             options.model

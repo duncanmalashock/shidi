@@ -1,4 +1,4 @@
-module Piano exposing (view)
+module PianoRoll.Piano exposing (view)
 
 import Html exposing (Html)
 import Svg

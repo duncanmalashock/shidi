@@ -10,7 +10,6 @@ import Html exposing (Html)
 import Html.Attributes
 import Html.Events
 import Json.Decode
-import Piano
 import PianoRoll
 import Ports
 import Project
@@ -156,17 +155,15 @@ view : Model -> { title : String, body : List (Html Msg) }
 view model =
     { title = "shidi"
     , body =
-        [ Html.div [ Html.Attributes.class "row" ]
-            [ Piano.view UserClickedPianoKey
-            , PianoRoll.view
-                { project = model.project
-                , model = model.pianoRoll
-                , toMsg = PianoRollMsg
-                }
-            , viewPlayButton
-            , viewSaveButton
-            , viewLoadButton
-            ]
+        [ PianoRoll.view
+            { project = model.project
+            , model = model.pianoRoll
+            , toMsg = PianoRollMsg
+            , onPianoKeyClick = UserClickedPianoKey
+            }
+        , viewPlayButton
+        , viewSaveButton
+        , viewLoadButton
         , viewFileSaveModal model
         ]
     }

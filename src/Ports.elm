@@ -1,8 +1,10 @@
 port module Ports exposing (playNote, playSong)
 
 import Json.Encode
-import MidiEvent
 import Music
+import Music.Duration
+import Music.Note
+import Music.Pitch
 import Project
 
 
@@ -27,13 +29,20 @@ playSong project =
         noteToJson : Music.NoteEvent -> Json.Encode.Value
         noteToJson noteEvent =
             let
-                midiEvent : MidiEvent.MidiEvent
-                midiEvent =
-                    MidiEvent.fromNoteEvent noteEvent
+                midiNoteNumber : Int
+                midiNoteNumber =
+                    Music.Note.pitch noteEvent.value
+                        |> Music.Pitch.toMIDINoteNumber
+
+                noteStartTime : Int
+                noteStartTime =
+                    Music.Duration.toFloat noteEvent.at
+                        * 4
+                        |> Basics.round
             in
             Json.Encode.object
-                [ ( "midi", Json.Encode.int midiEvent.pitch )
-                , ( "index", Json.Encode.int midiEvent.start )
+                [ ( "midi", Json.Encode.int midiNoteNumber )
+                , ( "index", Json.Encode.int noteStartTime )
                 ]
     in
     outgoing
