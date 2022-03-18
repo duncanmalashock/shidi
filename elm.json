@@ -1,7 +1,7 @@
 {
     "type": "application",
     "source-directories": [
-        "src",
+        "src/elm",
         "tmp/elm-music-theory/src",
         ".storybook/elm-storybook"
     ],

@@ -1,4 +1,4 @@
-import { Elm } from '../src/Main.elm'
+import { Elm } from './elm/Main.elm'
 import Ports from './js/ports.js'
 
 document.addEventListener('contextmenu', event => event.preventDefault())

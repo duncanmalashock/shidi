@@ -1,4 +1,4 @@
-import '../public/scss/main.scss'
+import '../src/scss/main.scss'
 import './storybook.css'
 
 export const parameters = {

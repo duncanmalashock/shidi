@@ -1,6 +1,6 @@
 import elmPlugin from 'vite-plugin-elm'
 
 export default {
-  root: 'public',
+  root: 'src',
   plugins: [elmPlugin()]
 }
