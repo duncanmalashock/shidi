@@ -38,13 +38,11 @@ playSong project =
                 noteStart =
                     noteEvent.at
                         |> Music.Duration.toFloat
-                        |> Debug.log "noteStart"
 
                 noteDuration : Float
                 noteDuration =
                     Music.Note.duration noteEvent.value
                         |> Music.Duration.toFloat
-                        |> Debug.log "noteDuration"
             in
             Json.Encode.object
                 [ ( "midi", Json.Encode.int midiNoteNumber )

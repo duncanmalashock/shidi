@@ -135,7 +135,6 @@ update { onClick } msg (Model model) =
                         pitchEvent : Music.PitchEvent
                         pitchEvent =
                             fromMusicToPitchEvent coordinate
-                                |> Debug.log "added note"
                     in
                     ( Model model
                     , Just
