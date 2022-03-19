@@ -1,4 +1,4 @@
-<img src="public/logo.jpg" width="300" />
+<img src="src/logo.jpg" width="300" />
 
 [![Netlify Status](https://api.netlify.com/api/v1/badges/05f815d9-cab4-4ce7-be4f-1c134e87f52d/deploy-status)](https://app.netlify.com/sites/shidi/deploys)
 
