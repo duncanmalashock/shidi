@@ -10,10 +10,14 @@ import Html exposing (Html)
 import Html.Attributes
 import Html.Events
 import Json.Decode
+import Music.Duration
+import Music.Note
+import Music.Pitch
 import PianoRoll
 import Ports
 import Project
 import Task
+import Tool
 
 
 main : Program () Model Msg
@@ -31,6 +35,7 @@ type alias Model =
     , fileName : String
     , showSaveModal : Bool
     , pianoRoll : PianoRoll.Model
+    , selectedTool : Tool.Tool
     }
 
 
@@ -47,6 +52,7 @@ initialModel =
     , fileName = ""
     , showSaveModal = False
     , pianoRoll = PianoRoll.init
+    , selectedTool = Tool.addNote Music.Duration.whole
     }
 
 
@@ -57,6 +63,8 @@ type Msg
     | PianoRollMsg PianoRoll.Msg
       -- Playback
     | UserClickedPlayButton
+      -- Note add tool
+    | UserClickedNoteValueButton Music.Duration.Duration
       -- Saving to file
     | UserClickedSaveButton
     | UserClickedModalSaveButton
@@ -77,25 +85,49 @@ update msg model =
 
         PianoRollMsg pianoRollMsg ->
             let
+                pianoRollClickAction =
+                    case model.selectedTool of
+                        Tool.AddNote _ ->
+                            PianoRoll.ShouldAddNote
+
                 ( pianoRoll, maybeOutMsg ) =
-                    PianoRoll.update pianoRollMsg model.pianoRoll
+                    PianoRoll.update
+                        { onClick =
+                            pianoRollClickAction
+                        }
+                        pianoRollMsg
+                        model.pianoRoll
 
                 { cmd, updatedProject } =
-                    case maybeOutMsg of
-                        Just (PianoRoll.AddNoteEvent noteEvent midiPitch) ->
-                            { cmd = Ports.playNote midiPitch
-                            , updatedProject = Project.addNote noteEvent model.project
-                            }
+                    case model.selectedTool of
+                        Tool.AddNote noteDuration ->
+                            case maybeOutMsg of
+                                Just (PianoRoll.AddNote pitchEvent) ->
+                                    { cmd =
+                                        Music.Pitch.toMIDINoteNumber pitchEvent.value
+                                            |> Ports.playNote
+                                    , updatedProject =
+                                        model.project
+                                            |> Project.addNote
+                                                { at = pitchEvent.at
+                                                , value = Music.Note.note pitchEvent.value noteDuration
+                                                }
+                                    }
 
-                        Just (PianoRoll.RemoveNoteEvent noteEvent) ->
-                            { cmd = Cmd.none
-                            , updatedProject = Project.removeNote noteEvent model.project
-                            }
+                                Just (PianoRoll.RemoveNote pitchEvent) ->
+                                    { cmd = Cmd.none
+                                    , updatedProject =
+                                        Project.removeNote
+                                            { at = pitchEvent.at
+                                            , value = Music.Note.note pitchEvent.value noteDuration
+                                            }
+                                            model.project
+                                    }
 
-                        Nothing ->
-                            { cmd = Cmd.none
-                            , updatedProject = model.project
-                            }
+                                Nothing ->
+                                    { cmd = Cmd.none
+                                    , updatedProject = model.project
+                                    }
             in
             ( { model
                 | pianoRoll = pianoRoll
@@ -150,6 +182,13 @@ update msg model =
             , Cmd.none
             )
 
+        UserClickedNoteValueButton duration ->
+            ( { model
+                | selectedTool = Tool.AddNote duration
+              }
+            , Cmd.none
+            )
+
 
 view : Model -> { title : String, body : List (Html Msg) }
 view model =
@@ -160,10 +199,15 @@ view model =
             , model = model.pianoRoll
             , toMsg = PianoRollMsg
             , onPianoKeyClick = UserClickedPianoKey
+            , newNoteValue =
+                case model.selectedTool of
+                    Tool.AddNote duration ->
+                        duration
             }
         , viewPlayButton
         , viewSaveButton
         , viewLoadButton
+        , viewNoteValueButtons
         , viewFileSaveModal model
         ]
     }
@@ -224,6 +268,30 @@ viewLoadButton =
         , Html.Events.onClick UserClickedLoadButton
         ]
         [ Html.text "Load" ]
+
+
+viewNoteValueButtons : Html Msg
+viewNoteValueButtons =
+    Html.div
+        [ Html.Attributes.class "noteValue-buttons"
+        ]
+        [ Html.button
+            [ Html.Events.onClick (UserClickedNoteValueButton Music.Duration.eighth)
+            ]
+            [ Html.text "1/8" ]
+        , Html.button
+            [ Html.Events.onClick (UserClickedNoteValueButton Music.Duration.quarter)
+            ]
+            [ Html.text "1/4" ]
+        , Html.button
+            [ Html.Events.onClick (UserClickedNoteValueButton Music.Duration.half)
+            ]
+            [ Html.text "1/2" ]
+        , Html.button
+            [ Html.Events.onClick (UserClickedNoteValueButton Music.Duration.whole)
+            ]
+            [ Html.text "1" ]
+        ]
 
 
 subscriptions : Model -> Sub Msg

@@ -15,6 +15,7 @@ module Project exposing
 -}
 
 import Music
+import Music.Note as Note
 
 
 type Project
@@ -50,10 +51,15 @@ addNote noteToAdd (Project project) =
 
 removeNote : Music.NoteEvent -> Project -> Project
 removeNote noteToRemove (Project project) =
+    let
+        matches : Music.NoteEvent -> Music.NoteEvent -> Bool
+        matches a b =
+            (a.at == b.at) && (Note.pitch a.value == Note.pitch b.value)
+    in
     Project
         { project
             | noteEvents =
-                List.filter (\current -> current /= noteToRemove)
+                List.filter (\current -> not (matches noteToRemove current))
                     project.noteEvents
         }
 

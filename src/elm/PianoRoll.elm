@@ -2,6 +2,7 @@ module PianoRoll exposing
     ( Model, init
     , Msg, update, OutMsg(..)
     , view
+    , ClickAction(..)
     )
 
 {-|
@@ -94,12 +95,22 @@ type Msg
 
 
 type OutMsg
-    = AddNoteEvent Music.NoteEvent Int
-    | RemoveNoteEvent Music.NoteEvent
+    = AddNote Music.PitchEvent
+    | RemoveNote Music.PitchEvent
 
 
-update : Msg -> Model -> ( Model, Maybe OutMsg )
-update msg (Model model) =
+type ClickAction
+    = ShouldAddNote
+    | ShouldRemoveNote
+
+
+update :
+    { onClick : ClickAction
+    }
+    -> Msg
+    -> Model
+    -> ( Model, Maybe OutMsg )
+update { onClick } msg (Model model) =
     case msg of
         UserMovedMouseOverGrid newPosition ->
             ( Model
@@ -118,29 +129,37 @@ update msg (Model model) =
             )
 
         UserClickedLeftMouseButton coordinate ->
-            let
-                noteEvent : Music.NoteEvent
-                noteEvent =
-                    fromMusicToNoteEvent coordinate
+            case onClick of
+                ShouldAddNote ->
+                    let
+                        pitchEvent : Music.PitchEvent
+                        pitchEvent =
+                            fromMusicToPitchEvent coordinate
+                                |> Debug.log "added note"
+                    in
+                    ( Model model
+                    , Just
+                        (AddNote pitchEvent)
+                    )
 
-                midiNoteNumber : Int
-                midiNoteNumber =
-                    Music.Note.pitch noteEvent.value
-                        |> Music.Pitch.toMIDINoteNumber
-            in
-            ( Model model
-            , Just
-                (AddNoteEvent noteEvent midiNoteNumber)
-            )
+                ShouldRemoveNote ->
+                    let
+                        pitchEvent : Music.PitchEvent
+                        pitchEvent =
+                            fromMusicToPitchEvent coordinate
+                    in
+                    ( Model model
+                    , Just (RemoveNote pitchEvent)
+                    )
 
         UserClickedRightMouseButton coordinate ->
             let
-                noteEvent : Music.NoteEvent
-                noteEvent =
-                    fromMusicToNoteEvent coordinate
+                pitchEvent : Music.PitchEvent
+                pitchEvent =
+                    fromMusicToPitchEvent coordinate
             in
             ( Model model
-            , Just (RemoveNoteEvent noteEvent)
+            , Just (RemoveNote pitchEvent)
             )
 
 
@@ -149,6 +168,7 @@ view :
     , model : Model
     , toMsg : Msg -> msg
     , onPianoKeyClick : Int -> msg
+    , newNoteValue : Music.Duration.Duration
     }
     -> Html msg
 view options =
@@ -164,6 +184,7 @@ view options =
             { project = options.project
             , model = options.model
             , toMsg = options.toMsg
+            , newNoteValue = options.newNoteValue
             }
         ]
 
@@ -172,6 +193,7 @@ viewRollWrapper :
     { project : Project.Project
     , model : Model
     , toMsg : Msg -> msg
+    , newNoteValue : Music.Duration.Duration
     }
     -> Html msg
 viewRollWrapper options =
@@ -191,7 +213,9 @@ viewRollWrapper options =
                 viewNote
                     options.model
                     "mediumseagreen"
-                    (fromMusicToNoteEvent coordinate)
+                    { at = coordinate.at
+                    , value = Music.Note.note coordinate.pitch options.newNoteValue
+                    }
 
             Nothing ->
                 Html.text ""
@@ -201,6 +225,7 @@ viewRollWrapper options =
 viewRoll :
     { project : Project.Project
     , model : Model
+    , newNoteValue : Music.Duration.Duration
     , toMsg : Msg -> msg
     }
     -> Html msg
@@ -238,9 +263,17 @@ viewNote (Model model) color noteEvent =
             MusicCoordinate noteEvent.at (Music.Note.pitch noteEvent.value)
                 |> fromMusicToPixels model.scaleX model.scaleY
 
+        noteDuration : Music.Duration.Duration
+        noteDuration =
+            Music.Note.duration noteEvent.value
+
         width : Int
         width =
-            cellSizeX model.scaleX
+            Music.Duration.multiplyByInt
+                (cellSizeX model.scaleX * 8)
+                noteDuration
+                |> Music.Duration.toFloat
+                |> Basics.round
 
         height : Int
         height =
@@ -369,12 +402,12 @@ type alias MusicCoordinate =
 
 pixelsXToStart : ScaleX -> Int -> Music.Duration.Duration
 pixelsXToStart scaleX x =
-    Music.Duration.multiplyByInt (x // cellSizeX scaleX) Music.Duration.quarter
+    Music.Duration.multiplyByInt (x // cellSizeX scaleX) Music.Duration.eighth
 
 
 startToPixelsX : ScaleX -> Music.Duration.Duration -> Int
 startToPixelsX scaleX duration =
-    Basics.round (Music.Duration.toFloat duration * 4) * cellSizeX scaleX
+    Basics.round (Music.Duration.toFloat duration * 8) * cellSizeX scaleX
 
 
 pixelsYToPitch : ScaleY -> Int -> Music.Pitch.Pitch
@@ -401,8 +434,8 @@ fromMusicToPixels scaleX scaleY { at, pitch } =
     }
 
 
-fromMusicToNoteEvent : MusicCoordinate -> Music.NoteEvent
-fromMusicToNoteEvent { at, pitch } =
+fromMusicToPitchEvent : MusicCoordinate -> Music.PitchEvent
+fromMusicToPitchEvent { at, pitch } =
     { at = at
-    , value = Music.Note.quarter pitch
+    , value = pitch
     }
