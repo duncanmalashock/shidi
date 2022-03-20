@@ -2,9 +2,9 @@ module File.Version.V1 exposing (decoder, encode)
 
 import Json.Decode
 import Json.Encode
-import Music
 import Music.Duration
-import Music.Note
+import Music.Event as Event
+import Music.Note as Note
 import Music.Pitch
 import Project
 
@@ -34,7 +34,7 @@ tags =
 encode : Project.Project -> Json.Encode.Value
 encode project =
     let
-        noteEvents : List Music.NoteEvent
+        noteEvents : List (Event.Event Note.Note)
         noteEvents =
             Project.noteEvents project
     in
@@ -44,7 +44,7 @@ encode project =
         ]
 
 
-noteEventToJson : Music.NoteEvent -> Json.Encode.Value
+noteEventToJson : Event.Event Note.Note -> Json.Encode.Value
 noteEventToJson noteEvent =
     Json.Encode.object
         [ ( tags.at, durationToJson noteEvent.at )
@@ -54,7 +54,7 @@ noteEventToJson noteEvent =
 
 durationToJson : Music.Duration.Duration -> Json.Encode.Value
 durationToJson duration =
-    case Music.Duration.toFraction duration of
+    case Music.Duration.toSerial duration of
         { numerator, denominator } ->
             Json.Encode.object
                 [ ( tags.numerator, Json.Encode.int numerator )
@@ -62,11 +62,11 @@ durationToJson duration =
                 ]
 
 
-noteToJson : Music.Note.Note -> Json.Encode.Value
+noteToJson : Note.Note -> Json.Encode.Value
 noteToJson note =
     Json.Encode.object
-        [ ( tags.midiNoteNumber, pitchToJson (Music.Note.pitch note) )
-        , ( tags.duration, durationToJson (Music.Note.duration note) )
+        [ ( tags.midiNoteNumber, pitchToJson (Note.pitch note) )
+        , ( tags.duration, durationToJson (Note.duration note) )
         ]
 
 
@@ -91,12 +91,12 @@ afterVersionDecoder version =
             (Json.Decode.field tags.noteEvents noteEventsDecoder)
 
 
-noteEventsDecoder : Json.Decode.Decoder (List Music.NoteEvent)
+noteEventsDecoder : Json.Decode.Decoder (List (Event.Event Note.Note))
 noteEventsDecoder =
     Json.Decode.list noteEventDecoder
 
 
-noteEventDecoder : Json.Decode.Decoder Music.NoteEvent
+noteEventDecoder : Json.Decode.Decoder (Event.Event Note.Note)
 noteEventDecoder =
     Json.Decode.map2
         (\at value ->
@@ -112,7 +112,7 @@ durationDecoder : Json.Decode.Decoder Music.Duration.Duration
 durationDecoder =
     Json.Decode.map2
         (\numerator denominator ->
-            Music.Duration.fromFraction
+            Music.Duration.fromSerial
                 { numerator = numerator
                 , denominator = denominator
                 }
@@ -121,11 +121,11 @@ durationDecoder =
         (Json.Decode.field tags.denominator Json.Decode.int)
 
 
-noteDecoder : Json.Decode.Decoder Music.Note.Note
+noteDecoder : Json.Decode.Decoder Note.Note
 noteDecoder =
     Json.Decode.map2
         (\pitch duration ->
-            Music.Note.note pitch duration
+            Note.note pitch duration
         )
         (Json.Decode.field tags.midiNoteNumber pitchDecoder)
         (Json.Decode.field tags.duration durationDecoder)

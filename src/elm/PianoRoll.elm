@@ -19,8 +19,8 @@ import Html exposing (Html)
 import Html.Attributes
 import Html.Events
 import Json.Decode
-import Music
 import Music.Duration
+import Music.Event as Event
 import Music.Note
 import Music.Pitch
 import PianoRoll.Key
@@ -261,7 +261,7 @@ viewNotes { project, model } =
         |> Html.div []
 
 
-viewNote : Model -> String -> Music.NoteEvent -> Html msg
+viewNote : Model -> String -> Event.Event Music.Note.Note -> Html msg
 viewNote (Model model) color noteEvent =
     let
         { x, y } =

@@ -14,7 +14,7 @@ module Project exposing
 
 -}
 
-import Music
+import Music.Event as Event
 import Music.Note as Note
 
 
@@ -23,11 +23,11 @@ type Project
 
 
 type alias Details =
-    { noteEvents : List Music.NoteEvent
+    { noteEvents : List (Event.Event Note.Note)
     }
 
 
-new : List Music.NoteEvent -> Project
+new : List (Event.Event Note.Note) -> Project
 new notes_ =
     Project
         { noteEvents = notes_
@@ -41,7 +41,7 @@ empty =
         }
 
 
-addNote : Music.NoteEvent -> Project -> Project
+addNote : Event.Event Note.Note -> Project -> Project
 addNote noteToAdd (Project project) =
     Project
         { project
@@ -49,10 +49,10 @@ addNote noteToAdd (Project project) =
         }
 
 
-removeNote : Music.NoteEvent -> Project -> Project
+removeNote : Event.Event Note.Note -> Project -> Project
 removeNote noteToRemove (Project project) =
     let
-        matches : Music.NoteEvent -> Music.NoteEvent -> Bool
+        matches : Event.Event Note.Note -> Event.Event Note.Note -> Bool
         matches a b =
             (a.at == b.at) && (Note.pitch a.value == Note.pitch b.value)
     in
@@ -64,6 +64,6 @@ removeNote noteToRemove (Project project) =
         }
 
 
-noteEvents : Project -> List Music.NoteEvent
+noteEvents : Project -> List (Event.Event Note.Note)
 noteEvents (Project project) =
     project.noteEvents

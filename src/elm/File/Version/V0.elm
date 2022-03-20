@@ -4,7 +4,8 @@ import Json.Decode
 import Json.Encode
 import Music
 import Music.Duration
-import Music.Note
+import Music.Event as Event
+import Music.Note as Note
 import Music.Pitch
 import Project
 
@@ -14,12 +15,12 @@ encode project =
     Json.Encode.list noteToJson (Project.noteEvents project)
 
 
-noteToJson : Music.NoteEvent -> Json.Encode.Value
+noteToJson : Event.Event Note.Note -> Json.Encode.Value
 noteToJson noteEvent =
     let
         midiNoteNumber : Int
         midiNoteNumber =
-            Music.Note.pitch noteEvent.value
+            Note.pitch noteEvent.value
                 |> Music.Pitch.toMIDINoteNumber
 
         noteStartTime : Int
@@ -40,19 +41,19 @@ decoder =
         |> Json.Decode.map Project.new
 
 
-notesDecoder : Json.Decode.Decoder (List Music.NoteEvent)
+notesDecoder : Json.Decode.Decoder (List (Event.Event Note.Note))
 notesDecoder =
     Json.Decode.list noteDecoder
 
 
-noteDecoder : Json.Decode.Decoder Music.NoteEvent
+noteDecoder : Json.Decode.Decoder (Event.Event Note.Note)
 noteDecoder =
     let
-        toNoteEvent : { pitch : Int, start : Int } -> Music.NoteEvent
+        toNoteEvent : { pitch : Int, start : Int } -> Event.Event Note.Note
         toNoteEvent { pitch, start } =
             { at = Music.Duration.multiplyByInt start Music.Duration.quarter
             , value =
-                Music.Note.note (Music.Pitch.fromMIDINoteNumber pitch)
+                Note.note (Music.Pitch.fromMIDINoteNumber pitch)
                     Music.Duration.quarter
             }
     in
