@@ -217,7 +217,7 @@ viewRollWrapper options =
             Just coordinate ->
                 viewNote
                     options.model
-                    "#ffffff44"
+                    "#ffffff22"
                     { at = coordinate.at
                     , value = Music.Note.note coordinate.pitch options.newNoteValue
                     }
@@ -287,6 +287,8 @@ viewNote (Model model) color noteEvent =
     Html.div
         [ Html.Attributes.class "note-preview"
         , Html.Attributes.style "background" color
+        , Html.Attributes.style "border" "1px solid #ffffff66"
+        , Html.Attributes.style "box-sizing" "border-box"
         , Html.Attributes.style "width" (String.fromInt width ++ "px")
         , Html.Attributes.style "height" (String.fromInt height ++ "px")
         , Html.Attributes.style "transform"
