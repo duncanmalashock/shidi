@@ -3,6 +3,7 @@ module File.Load exposing (load)
 import File
 import File.Version.V0
 import File.Version.V1
+import File.Version.V2
 import Json.Decode
 import Project
 import Task
@@ -28,6 +29,7 @@ decode jsonString =
 
 decoders : List (Json.Decode.Decoder Project.Project)
 decoders =
-    [ File.Version.V1.decoder
+    [ File.Version.V2.decoder
+    , File.Version.V1.decoder
     , File.Version.V0.decoder
     ]
