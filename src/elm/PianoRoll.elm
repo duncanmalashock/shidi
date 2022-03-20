@@ -95,8 +95,14 @@ type Msg
 
 
 type OutMsg
-    = AddNote Music.PitchEvent
-    | RemoveNote Music.PitchEvent
+    = AddNote PitchEvent
+    | RemoveNote PitchEvent
+
+
+type alias PitchEvent =
+    { at : Music.Duration.Duration
+    , value : Music.Pitch.Pitch
+    }
 
 
 type ClickAction
@@ -132,7 +138,7 @@ update { onClick } msg (Model model) =
             case onClick of
                 ShouldAddNote ->
                     let
-                        pitchEvent : Music.PitchEvent
+                        pitchEvent : PitchEvent
                         pitchEvent =
                             fromMusicToPitchEvent coordinate
                     in
@@ -143,7 +149,7 @@ update { onClick } msg (Model model) =
 
                 ShouldRemoveNote ->
                     let
-                        pitchEvent : Music.PitchEvent
+                        pitchEvent : PitchEvent
                         pitchEvent =
                             fromMusicToPitchEvent coordinate
                     in
@@ -153,7 +159,7 @@ update { onClick } msg (Model model) =
 
         UserClickedRightMouseButton coordinate ->
             let
-                pitchEvent : Music.PitchEvent
+                pitchEvent : PitchEvent
                 pitchEvent =
                     fromMusicToPitchEvent coordinate
             in
@@ -211,7 +217,7 @@ viewRollWrapper options =
             Just coordinate ->
                 viewNote
                     options.model
-                    "mediumseagreen"
+                    "#ffffff44"
                     { at = coordinate.at
                     , value = Music.Note.note coordinate.pitch options.newNoteValue
                     }
@@ -433,7 +439,7 @@ fromMusicToPixels scaleX scaleY { at, pitch } =
     }
 
 
-fromMusicToPitchEvent : MusicCoordinate -> Music.PitchEvent
+fromMusicToPitchEvent : MusicCoordinate -> PitchEvent
 fromMusicToPitchEvent { at, pitch } =
     { at = at
     , value = pitch
