@@ -4,8 +4,9 @@
   "description": "music editor",
   "scripts": {
     "load-deps": "sh scripts/elm-music-theory.sh",
-    "build": "yarn load-deps && vite build",
+    "build": "vite build",
     "start": "yarn build && vite",
+    "build:prod": "yarn load-deps && vite build",
     "storybook": "start-storybook -p 6006",
     "storybook:build": "build-storybook -o dist"
   },
