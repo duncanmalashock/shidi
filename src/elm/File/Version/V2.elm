@@ -8,6 +8,7 @@ import Music.Event as Event
 import Music.Note as Note
 import Music.Pitch as Pitch
 import Music.PitchClass as PitchClass
+import Music.Tempo as Tempo
 import Project
 
 
@@ -25,6 +26,7 @@ tags :
     , octave : String
     , letter : String
     , offset : String
+    , tempo : String
     }
 tags =
     { version = "version"
@@ -40,6 +42,7 @@ tags =
     , octave = "octave"
     , letter = "letter"
     , offset = "offset"
+    , tempo = "tempo"
     }
 
 
@@ -51,11 +54,19 @@ decoder =
 
 afterVersionDecoder : Int -> Json.Decode.Decoder Project.Project
 afterVersionDecoder version =
+    let
+        toNewProject : List (Event.Event Note.Note) -> Int -> Project.Project
+        toNewProject noteEvents tempo =
+            Project.new
+                { noteEvents = noteEvents
+                , tempo = Tempo.quarterNotesPerMinute tempo
+                }
+    in
     if version /= 2 then
         Json.Decode.fail "failed to decode: unsupported version number"
 
     else
-        Json.Decode.map Project.new
+        Json.Decode.map2 toNewProject
             (Json.Decode.field tags.noteEvents
                 (noteEventsDecoder
                     |> Json.Decode.map
@@ -65,6 +76,7 @@ afterVersionDecoder version =
                         )
                 )
             )
+            (Json.Decode.field tags.tempo Json.Decode.int)
 
 
 noteEventsDecoder : Json.Decode.Decoder (List (Event.Serial Note.Serial))
@@ -124,6 +136,10 @@ encode project =
         noteEvents : List (Event.Event Note.Note)
         noteEvents =
             Project.noteEvents project
+
+        tempo : Int
+        tempo =
+            Project.tempo project
     in
     Json.Encode.object
         [ ( tags.version, Json.Encode.int 2 )
@@ -132,6 +148,7 @@ encode project =
                 (Event.toSerial Note.toSerial >> noteEventToJson)
                 noteEvents
           )
+        , ( tags.tempo, Json.Encode.int tempo )
         ]
 
 

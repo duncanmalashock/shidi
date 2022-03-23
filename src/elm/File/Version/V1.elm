@@ -6,6 +6,7 @@ import Music.Duration
 import Music.Event as Event
 import Music.Note as Note
 import Music.Pitch
+import Music.Tempo as Tempo
 import Project
 
 
@@ -87,7 +88,13 @@ afterVersionDecoder version =
         Json.Decode.fail "failed to decode: unsupported version number"
 
     else
-        Json.Decode.map Project.new
+        Json.Decode.map
+            (\notes ->
+                Project.new
+                    { noteEvents = notes
+                    , tempo = Tempo.quarterNotesPerMinute 120
+                    }
+            )
             (Json.Decode.field tags.noteEvents noteEventsDecoder)
 
 

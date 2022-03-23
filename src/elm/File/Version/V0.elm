@@ -7,6 +7,7 @@ import Music.Duration
 import Music.Event as Event
 import Music.Note as Note
 import Music.Pitch
+import Music.Tempo as Tempo
 import Project
 
 
@@ -38,7 +39,13 @@ noteToJson noteEvent =
 decoder : Json.Decode.Decoder Project.Project
 decoder =
     notesDecoder
-        |> Json.Decode.map Project.new
+        |> Json.Decode.map
+            (\notes ->
+                Project.new
+                    { noteEvents = notes
+                    , tempo = Tempo.quarterNotesPerMinute 120
+                    }
+            )
 
 
 notesDecoder : Json.Decode.Decoder (List (Event.Event Note.Note))

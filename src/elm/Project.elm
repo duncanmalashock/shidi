@@ -1,7 +1,7 @@
 module Project exposing
     ( Project, empty, new
     , addNote, removeNote
-    , noteEvents
+    , noteEvents, tempo
     )
 
 {-|
@@ -10,12 +10,13 @@ module Project exposing
 
 @docs addNote, removeNote
 
-@docs noteEvents
+@docs noteEvents, tempo
 
 -}
 
 import Music.Event as Event
 import Music.Note as Note
+import Music.Tempo as Tempo
 
 
 type Project
@@ -24,13 +25,19 @@ type Project
 
 type alias Details =
     { noteEvents : List (Event.Event Note.Note)
+    , tempo : Tempo.Tempo
     }
 
 
-new : List (Event.Event Note.Note) -> Project
-new notes_ =
+new :
+    { noteEvents : List (Event.Event Note.Note)
+    , tempo : Tempo.Tempo
+    }
+    -> Project
+new input =
     Project
-        { noteEvents = notes_
+        { noteEvents = input.noteEvents
+        , tempo = input.tempo
         }
 
 
@@ -38,6 +45,7 @@ empty : Project
 empty =
     Project
         { noteEvents = []
+        , tempo = Tempo.quarterNotesPerMinute 120
         }
 
 
@@ -67,3 +75,9 @@ removeNote noteToRemove (Project project) =
 noteEvents : Project -> List (Event.Event Note.Note)
 noteEvents (Project project) =
     project.noteEvents
+
+
+tempo : Project -> Int
+tempo (Project project) =
+    Tempo.toSerial project.tempo
+        |> .beatsPerMinute
