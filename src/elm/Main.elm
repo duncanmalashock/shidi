@@ -17,7 +17,6 @@ import PianoRoll
 import Ports
 import Project
 import Task
-import Tool
 
 
 main : Program () Model Msg
@@ -35,7 +34,7 @@ type alias Model =
     , fileName : String
     , showSaveModal : Bool
     , pianoRoll : PianoRoll.Model
-    , selectedTool : Tool.Tool
+    , newNoteDuration : Music.Duration.Duration
     }
 
 
@@ -52,7 +51,7 @@ initialModel =
     , fileName = ""
     , showSaveModal = False
     , pianoRoll = PianoRoll.init
-    , selectedTool = Tool.addNote Music.Duration.whole
+    , newNoteDuration = Music.Duration.whole
     }
 
 
@@ -85,49 +84,39 @@ update msg model =
 
         PianoRollMsg pianoRollMsg ->
             let
-                pianoRollClickAction =
-                    case model.selectedTool of
-                        Tool.AddNote _ ->
-                            PianoRoll.ShouldAddNote
-
                 ( pianoRoll, maybeOutMsg ) =
                     PianoRoll.update
-                        { onClick =
-                            pianoRollClickAction
-                        }
                         pianoRollMsg
                         model.pianoRoll
 
                 { cmd, updatedProject } =
-                    case model.selectedTool of
-                        Tool.AddNote noteDuration ->
-                            case maybeOutMsg of
-                                Just (PianoRoll.AddNote pitchEvent) ->
-                                    { cmd =
-                                        Music.Pitch.toMIDINoteNumber pitchEvent.value
-                                            |> Ports.playNote
-                                    , updatedProject =
-                                        model.project
-                                            |> Project.addNote
-                                                { at = pitchEvent.at
-                                                , value = Music.Note.note pitchEvent.value noteDuration
-                                                }
-                                    }
+                    case maybeOutMsg of
+                        Just (PianoRoll.AddNote pitchEvent) ->
+                            { cmd =
+                                Music.Pitch.toMIDINoteNumber pitchEvent.value
+                                    |> Ports.playNote
+                            , updatedProject =
+                                model.project
+                                    |> Project.addNote
+                                        { at = pitchEvent.at
+                                        , value = Music.Note.note pitchEvent.value model.newNoteDuration
+                                        }
+                            }
 
-                                Just (PianoRoll.RemoveNote pitchEvent) ->
-                                    { cmd = Cmd.none
-                                    , updatedProject =
-                                        Project.removeNote
-                                            { at = pitchEvent.at
-                                            , value = Music.Note.note pitchEvent.value noteDuration
-                                            }
-                                            model.project
+                        Just (PianoRoll.RemoveNote pitchEvent) ->
+                            { cmd = Cmd.none
+                            , updatedProject =
+                                Project.removeNote
+                                    { at = pitchEvent.at
+                                    , value = Music.Note.note pitchEvent.value model.newNoteDuration
                                     }
+                                    model.project
+                            }
 
-                                Nothing ->
-                                    { cmd = Cmd.none
-                                    , updatedProject = model.project
-                                    }
+                        Nothing ->
+                            { cmd = Cmd.none
+                            , updatedProject = model.project
+                            }
             in
             ( { model
                 | pianoRoll = pianoRoll
@@ -184,7 +173,7 @@ update msg model =
 
         UserClickedNoteValueButton duration ->
             ( { model
-                | selectedTool = Tool.AddNote duration
+                | newNoteDuration = duration
               }
             , Cmd.none
             )
@@ -199,10 +188,7 @@ view model =
             , model = model.pianoRoll
             , toMsg = PianoRollMsg
             , onPianoKeyClick = UserClickedPianoKey
-            , newNoteValue =
-                case model.selectedTool of
-                    Tool.AddNote duration ->
-                        duration
+            , newNoteValue = model.newNoteDuration
             }
         , viewPlayButton
         , viewSaveButton

@@ -111,12 +111,10 @@ type ClickAction
 
 
 update :
-    { onClick : ClickAction
-    }
-    -> Msg
+    Msg
     -> Model
     -> ( Model, Maybe OutMsg )
-update { onClick } msg (Model model) =
+update msg (Model model) =
     case msg of
         UserMovedMouseOverGrid newPosition ->
             ( Model
@@ -135,27 +133,15 @@ update { onClick } msg (Model model) =
             )
 
         UserClickedLeftMouseButton coordinate ->
-            case onClick of
-                ShouldAddNote ->
-                    let
-                        pitchEvent : PitchEvent
-                        pitchEvent =
-                            fromMusicToPitchEvent coordinate
-                    in
-                    ( Model model
-                    , Just
-                        (AddNote pitchEvent)
-                    )
-
-                ShouldRemoveNote ->
-                    let
-                        pitchEvent : PitchEvent
-                        pitchEvent =
-                            fromMusicToPitchEvent coordinate
-                    in
-                    ( Model model
-                    , Just (RemoveNote pitchEvent)
-                    )
+            let
+                pitchEvent : PitchEvent
+                pitchEvent =
+                    fromMusicToPitchEvent coordinate
+            in
+            ( Model model
+            , Just
+                (AddNote pitchEvent)
+            )
 
         UserClickedRightMouseButton coordinate ->
             let
