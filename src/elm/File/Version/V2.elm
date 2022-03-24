@@ -140,6 +140,8 @@ encode project =
         tempo : Int
         tempo =
             Project.tempo project
+                |> Tempo.toSerial
+                |> .beatsPerMinute
     in
     Json.Encode.object
         [ ( tags.version, Json.Encode.int 2 )

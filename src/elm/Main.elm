@@ -13,6 +13,7 @@ import Json.Decode
 import Music.Duration
 import Music.Note
 import Music.Pitch
+import Music.Tempo as Tempo
 import PianoRoll
 import Ports
 import Project
@@ -74,6 +75,8 @@ type Msg
     | UserClickedLoadButton
     | UserSelectedFile File.File
     | BrowserLoadedFile (Result Json.Decode.Error Project.Project)
+      -- Setting tempo
+    | UserTypedIntoTempoField String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -178,6 +181,20 @@ update msg model =
             , Cmd.none
             )
 
+        UserTypedIntoTempoField newTempoString ->
+            let
+                newTempo =
+                    case String.toInt newTempoString of
+                        Just tempoBPM ->
+                            Tempo.quarterNotesPerMinute tempoBPM
+
+                        Nothing ->
+                            Project.tempo model.project
+            in
+            ( { model | project = Project.setTempo newTempo model.project }
+            , Cmd.none
+            )
+
 
 view : Model -> { title : String, body : List (Html Msg) }
 view model =
@@ -194,6 +211,7 @@ view model =
         , viewSaveButton
         , viewLoadButton
         , viewNoteValueButtons
+        , viewTempoField (Project.tempo model.project)
         , viewFileSaveModal model
         ]
     }
@@ -278,6 +296,27 @@ viewNoteValueButtons =
             ]
             [ Html.text "1" ]
         ]
+
+
+viewTempoField : Tempo.Tempo -> Html Msg
+viewTempoField tempo =
+    let
+        tempoAsString : String
+        tempoAsString =
+            tempo
+                |> Tempo.toSerial
+                |> .beatsPerMinute
+                |> String.fromInt
+    in
+    Html.input
+        [ Html.Attributes.type_ "number"
+        , Html.Attributes.class "tempo-field"
+        , Html.Attributes.value tempoAsString
+        , Html.Attributes.min "20"
+        , Html.Attributes.max "400"
+        , Html.Events.onInput UserTypedIntoTempoField
+        ]
+        []
 
 
 subscriptions : Model -> Sub Msg

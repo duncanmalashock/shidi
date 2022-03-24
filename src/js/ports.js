@@ -2,7 +2,7 @@ import Audio from './audio.js'
 
 const handlers = {
   playNote: (data) => Audio.play([{midi: data, start: 0, duration: "8n"}]),
-  playSong: (notes) => Audio.play(notes)
+  playSong: (data) => Audio.play(data)
 }
 
 const init = (app) => {

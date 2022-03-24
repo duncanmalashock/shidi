@@ -6,6 +6,7 @@ import Music.Duration
 import Music.Event as Event
 import Music.Note as Note
 import Music.Pitch
+import Music.Tempo as Tempo
 import Project
 
 
@@ -27,6 +28,21 @@ playNote noteNumber =
 playSong : Project.Project -> Cmd msg
 playSong project =
     let
+        beatsPerMinute : Float
+        beatsPerMinute =
+            Project.tempo project
+                |> Tempo.toSerial
+                |> .beatsPerMinute
+                |> Basics.toFloat
+
+        bpmAtWhichQuarterNotesLastOneSecond : Float
+        bpmAtWhichQuarterNotesLastOneSecond =
+            60
+
+        durationInRealTime : Float -> Float
+        durationInRealTime duration =
+            duration * (bpmAtWhichQuarterNotesLastOneSecond / beatsPerMinute) * 4
+
         noteToJson : Event.Event Note.Note -> Json.Encode.Value
         noteToJson noteEvent =
             let
@@ -39,11 +55,13 @@ playSong project =
                 noteStart =
                     noteEvent.at
                         |> Music.Duration.toFloat
+                        |> durationInRealTime
 
                 noteDuration : Float
                 noteDuration =
                     Note.duration noteEvent.value
                         |> Music.Duration.toFloat
+                        |> durationInRealTime
             in
             Json.Encode.object
                 [ ( "midi", Json.Encode.int midiNoteNumber )

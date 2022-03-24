@@ -1,6 +1,7 @@
 module Project exposing
     ( Project, empty, new
     , addNote, removeNote
+    , setTempo
     , noteEvents, tempo
     )
 
@@ -9,6 +10,7 @@ module Project exposing
 @docs Project, empty, new
 
 @docs addNote, removeNote
+@docs setTempo
 
 @docs noteEvents, tempo
 
@@ -72,12 +74,19 @@ removeNote noteToRemove (Project project) =
         }
 
 
+setTempo : Tempo.Tempo -> Project -> Project
+setTempo newTempo (Project project) =
+    Project
+        { project
+            | tempo = newTempo
+        }
+
+
 noteEvents : Project -> List (Event.Event Note.Note)
 noteEvents (Project project) =
     project.noteEvents
 
 
-tempo : Project -> Int
+tempo : Project -> Tempo.Tempo
 tempo (Project project) =
-    Tempo.toSerial project.tempo
-        |> .beatsPerMinute
+    project.tempo
