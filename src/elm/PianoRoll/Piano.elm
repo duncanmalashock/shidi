@@ -37,7 +37,7 @@ viewOctave { onNoteClicked, height } octave =
 
         whiteKeyWidth : Int
         whiteKeyWidth =
-            40
+            37
 
         xOffset : Int
         xOffset =
@@ -65,7 +65,7 @@ viewOctave { onNoteClicked, height } octave =
 
         cKeyLabelRightOffset : Int
         cKeyLabelRightOffset =
-            18
+            17
 
         cKeyLabelBottomOffset : Int
         cKeyLabelBottomOffset =
