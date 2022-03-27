@@ -37,7 +37,11 @@ viewOctave { onNoteClicked, height } octave =
 
         whiteKeyWidth : Int
         whiteKeyWidth =
-            55
+            45
+
+        xOffset : Int
+        xOffset =
+            10
 
         blackKeyHeight : Int
         blackKeyHeight =
@@ -45,7 +49,11 @@ viewOctave { onNoteClicked, height } octave =
 
         blackKeyWidth : Int
         blackKeyWidth =
-            25
+            20
+
+        keyRoundedCorner : Int
+        keyRoundedCorner =
+            2
 
         octaveHeight : Int
         octaveHeight =
@@ -57,7 +65,7 @@ viewOctave { onNoteClicked, height } octave =
 
         cKeyLabelRightOffset : Int
         cKeyLabelRightOffset =
-            23
+            20
 
         cKeyLabelBottomOffset : Int
         cKeyLabelBottomOffset =
@@ -65,7 +73,7 @@ viewOctave { onNoteClicked, height } octave =
 
         fontSize : Int
         fontSize =
-            13
+            11
 
         viewBoxAttr : String
         viewBoxAttr =
@@ -101,13 +109,14 @@ viewOctave { onNoteClicked, height } octave =
                         |> String.fromInt
             in
             Svg.rect
-                [ Attr.fill "white"
-                , Attr.x "0"
+                [ Attr.fill "#eee"
+                , Attr.x (String.fromInt -xOffset)
                 , Attr.y yValue
-                , Attr.width (String.fromInt whiteKeyWidth)
+                , Attr.width (String.fromInt (whiteKeyWidth + xOffset))
                 , Attr.height (String.fromInt whiteKeyHeight)
-                , Attr.stroke "black"
-                , Attr.strokeWidth "3"
+                , Attr.stroke "#222"
+                , Attr.strokeWidth "1"
+                , Attr.rx (String.fromInt keyRoundedCorner)
                 , Attr.class "piano__key piano__key--white"
                 , Event.onClick onNoteClicked_
                 ]
@@ -124,13 +133,14 @@ viewOctave { onNoteClicked, height } octave =
                         |> String.fromInt
             in
             Svg.rect
-                [ Attr.fill "black"
-                , Attr.x "0"
+                [ Attr.fill "#222"
+                , Attr.x (String.fromInt -xOffset)
                 , Attr.y yValue
-                , Attr.width (String.fromInt blackKeyWidth)
+                , Attr.width (String.fromInt (blackKeyWidth + xOffset))
                 , Attr.height (String.fromInt blackKeyHeight)
-                , Attr.stroke "black"
-                , Attr.strokeWidth "3"
+                , Attr.stroke "#222"
+                , Attr.strokeWidth "1"
+                , Attr.rx (String.fromInt keyRoundedCorner)
                 , Attr.class "piano__key piano__key--black"
                 , Event.onClick onNoteClicked_
                 ]

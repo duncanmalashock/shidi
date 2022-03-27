@@ -41,7 +41,7 @@ toFillColor : Key -> String
 toFillColor key =
     case key of
         WhiteKey ->
-            "#21232e"
+            "#191921"
 
         BlackKey ->
             "#0c0e14"

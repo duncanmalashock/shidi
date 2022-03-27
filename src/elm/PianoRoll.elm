@@ -342,8 +342,8 @@ backgroundImageAttr options =
             )
         |> String.replace "$totalHeight" (String.fromInt (12 * options.height))
         |> String.replace "$midSplit" (String.fromInt (7 * options.height))
-        |> String.replace "$verticalLineColor" "#fff5"
-        |> String.replace "$horizontalLineColor" "#fff2"
+        |> String.replace "$verticalLineColor" "#fff2"
+        |> String.replace "$horizontalLineColor" "#fff1"
         |> String.replace "$width" (String.fromInt options.width)
         |> String.replace "\n" ""
         |> String.replace "#" "%23"
