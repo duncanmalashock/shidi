@@ -1,22 +1,27 @@
 module Project exposing
     ( Project, empty, new
+    , noteEvents
     , addNote, removeNote
+    , tempo
     , setTempo
-    , noteEvents, tempo
     )
 
 {-|
 
 @docs Project, empty, new
 
+@docs noteEvents
 @docs addNote, removeNote
-@docs setTempo
 
-@docs noteEvents, tempo
+@docs tempo
+@docs setTempo
 
 -}
 
+import Music
 import Music.Event as Event
+import Music.Key as Key
+import Music.Meter as Meter
 import Music.Note as Note
 import Music.Tempo as Tempo
 
@@ -26,51 +31,59 @@ type Project
 
 
 type alias Details =
-    { noteEvents : List (Event.Event Note.Note)
-    , tempo : Tempo.Tempo
+    { music : Music.Music
     }
 
 
 new :
     { noteEvents : List (Event.Event Note.Note)
     , tempo : Tempo.Tempo
+    , meter : Meter.Meter
+    , key : Key.Key
     }
     -> Project
 new input =
     Project
-        { noteEvents = input.noteEvents
-        , tempo = input.tempo
+        { music =
+            Music.new
+                { tempo = input.tempo
+                , key = input.key
+                , meter = input.meter
+                }
+                |> Music.addNoteEvents input.noteEvents
         }
 
 
 empty : Project
 empty =
     Project
-        { noteEvents = []
-        , tempo = Tempo.quarterNotesPerMinute 120
+        { music =
+            Music.new
+                { tempo = defaultTempo
+                , key = Key.c
+                , meter = Meter.fourFour
+                }
         }
+
+
+defaultTempo : Tempo.Tempo
+defaultTempo =
+    Tempo.quarterNotesPerMinute 120
 
 
 addNote : Event.Event Note.Note -> Project -> Project
 addNote noteToAdd (Project project) =
     Project
         { project
-            | noteEvents = noteToAdd :: project.noteEvents
+            | music = Music.addNote noteToAdd project.music
         }
 
 
 removeNote : Event.Event Note.Note -> Project -> Project
 removeNote noteToRemove (Project project) =
-    let
-        matches : Event.Event Note.Note -> Event.Event Note.Note -> Bool
-        matches a b =
-            (a.at == b.at) && (Note.pitch a.value == Note.pitch b.value)
-    in
     Project
         { project
-            | noteEvents =
-                List.filter (\current -> not (matches noteToRemove current))
-                    project.noteEvents
+            | music = Music.removeNote noteToRemove project.music
         }
 
 
@@ -78,15 +91,18 @@ setTempo : Tempo.Tempo -> Project -> Project
 setTempo newTempo (Project project) =
     Project
         { project
-            | tempo = newTempo
+            | music = Music.setTempo newTempo project.music
         }
 
 
 noteEvents : Project -> List (Event.Event Note.Note)
 noteEvents (Project project) =
-    project.noteEvents
+    Music.noteEvents project.music
 
 
 tempo : Project -> Tempo.Tempo
 tempo (Project project) =
-    project.tempo
+    Music.tempoEvents project.music
+        |> List.head
+        |> Maybe.map .value
+        |> Maybe.withDefault defaultTempo

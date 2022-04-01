@@ -5,6 +5,8 @@ import Json.Encode
 import Music
 import Music.Duration
 import Music.Event as Event
+import Music.Key as Key
+import Music.Meter as Meter
 import Music.Note as Note
 import Music.Pitch
 import Music.Tempo as Tempo
@@ -44,6 +46,8 @@ decoder =
                 Project.new
                     { noteEvents = notes
                     , tempo = Tempo.quarterNotesPerMinute 120
+                    , meter = Meter.fourFour
+                    , key = Key.c
                     }
             )
 

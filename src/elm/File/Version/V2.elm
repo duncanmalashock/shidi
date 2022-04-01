@@ -5,6 +5,8 @@ import Json.Encode
 import Music.Duration as Duration
 import Music.Dynamics as Dynamics
 import Music.Event as Event
+import Music.Key as Key
+import Music.Meter as Meter
 import Music.Note as Note
 import Music.Pitch as Pitch
 import Music.PitchClass as PitchClass
@@ -60,6 +62,8 @@ afterVersionDecoder version =
             Project.new
                 { noteEvents = noteEvents
                 , tempo = Tempo.quarterNotesPerMinute tempo
+                , meter = Meter.fourFour
+                , key = Key.c
                 }
     in
     if version /= 2 then
