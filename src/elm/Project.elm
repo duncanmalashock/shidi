@@ -49,6 +49,7 @@ new input =
                 { tempo = input.tempo
                 , key = input.key
                 , meter = input.meter
+                , measureLength = defaultMeasureLength
                 }
                 |> Music.addNoteEvents input.noteEvents
         }
@@ -62,6 +63,7 @@ empty =
                 { tempo = defaultTempo
                 , key = Key.c
                 , meter = Meter.fourFour
+                , measureLength = defaultMeasureLength
                 }
         }
 
@@ -69,6 +71,11 @@ empty =
 defaultTempo : Tempo.Tempo
 defaultTempo =
     Tempo.quarterNotesPerMinute 120
+
+
+defaultMeasureLength : Int
+defaultMeasureLength =
+    4
 
 
 addNote : Event.Event Note.Note -> Project -> Project
