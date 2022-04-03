@@ -3,7 +3,7 @@ module Project exposing
     , noteEvents
     , addNote, removeNote
     , tempo
-    , setTempo
+    , setInitialTempo
     )
 
 {-|
@@ -49,7 +49,7 @@ new input =
                 { tempo = input.tempo
                 , key = input.key
                 , meter = input.meter
-                , measureLength = defaultMeasureLength
+                , measures = defaultMeasureLength
                 }
                 |> Music.addNoteEvents input.noteEvents
         }
@@ -63,7 +63,7 @@ empty =
                 { tempo = defaultTempo
                 , key = Key.c
                 , meter = Meter.fourFour
-                , measureLength = defaultMeasureLength
+                , measures = defaultMeasureLength
                 }
         }
 
@@ -94,11 +94,11 @@ removeNote noteToRemove (Project project) =
         }
 
 
-setTempo : Tempo.Tempo -> Project -> Project
-setTempo newTempo (Project project) =
+setInitialTempo : Tempo.Tempo -> Project -> Project
+setInitialTempo newTempo (Project project) =
     Project
         { project
-            | music = Music.setTempo newTempo project.music
+            | music = Music.setInitialTempo newTempo project.music
         }
 
 

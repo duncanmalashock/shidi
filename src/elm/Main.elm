@@ -191,7 +191,7 @@ update msg model =
                         Nothing ->
                             Project.tempo model.project
             in
-            ( { model | project = Project.setTempo newTempo model.project }
+            ( { model | project = Project.setInitialTempo newTempo model.project }
             , Cmd.none
             )
 
