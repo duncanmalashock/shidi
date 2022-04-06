@@ -3,7 +3,7 @@ module Project exposing
     , noteEvents
     , addNote, removeNote
     , tempo
-    , setInitialTempo
+    , measures, setInitialTempo
     )
 
 {-|
@@ -113,3 +113,8 @@ tempo (Project project) =
         |> List.head
         |> Maybe.map .value
         |> Maybe.withDefault defaultTempo
+
+
+measures : Project -> List Music.Measure
+measures (Project project) =
+    Music.measures project.music
