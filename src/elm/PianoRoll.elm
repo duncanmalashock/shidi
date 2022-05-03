@@ -254,7 +254,7 @@ viewRoll options measure =
                 }
             )
          ]
-            ++ mouseEvents model.scaleX model.scaleY
+            ++ mouseEvents measure model.scaleX model.scaleY
         )
         []
         |> Html.map options.toMsg
@@ -306,14 +306,14 @@ viewNote (Model model) color noteEvent =
         []
 
 
-mouseEvents : ScaleX -> ScaleY -> List (Html.Attribute Msg)
-mouseEvents scaleX scaleY =
+mouseEvents : Music.Measure -> ScaleX -> ScaleY -> List (Html.Attribute Msg)
+mouseEvents measure scaleX scaleY =
     let
         onMouseMove : Html.Attribute Msg
         onMouseMove =
             Html.Events.on "mousemove"
                 (offsetDecoder
-                    |> Json.Decode.map (fromPixelsToMusic scaleX scaleY)
+                    |> Json.Decode.map (fromPixelsToMusic measure scaleX scaleY)
                     |> Json.Decode.map UserMovedMouseOverGrid
                 )
 
@@ -324,12 +324,12 @@ mouseEvents scaleX scaleY =
                     (\mouseButton ->
                         if mouseButton == 0 then
                             offsetDecoder
-                                |> Json.Decode.map (fromPixelsToMusic scaleX scaleY)
+                                |> Json.Decode.map (fromPixelsToMusic measure scaleX scaleY)
                                 |> Json.Decode.map UserClickedLeftMouseButton
 
                         else if mouseButton == 2 then
                             offsetDecoder
-                                |> Json.Decode.map (fromPixelsToMusic scaleX scaleY)
+                                |> Json.Decode.map (fromPixelsToMusic measure scaleX scaleY)
                                 |> Json.Decode.map UserClickedRightMouseButton
 
                         else
@@ -435,9 +435,14 @@ pitchToPixelsY scaleY pitch =
         * cellSizeY scaleY
 
 
-fromPixelsToMusic : ScaleX -> ScaleY -> PixelCoordinate -> MusicCoordinate
-fromPixelsToMusic scaleX scaleY { x, y } =
-    MusicCoordinate (pixelsXToStart scaleX x) (pixelsYToPitch scaleY y)
+fromPixelsToMusic : Music.Measure -> ScaleX -> ScaleY -> PixelCoordinate -> MusicCoordinate
+fromPixelsToMusic measure scaleX scaleY { x, y } =
+    let
+        xDuration : Music.Duration.Duration
+        xDuration =
+            Music.Duration.add measure.start (pixelsXToStart scaleX x)
+    in
+    MusicCoordinate xDuration (pixelsYToPitch scaleY y)
 
 
 fromMusicToPixels : ScaleX -> ScaleY -> MusicCoordinate -> PixelCoordinate
