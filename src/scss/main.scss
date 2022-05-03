@@ -94,3 +94,16 @@ body {
     height: 100%;
     background: rgba(0,0,0,0.25);
 }
+
+.toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 2rem;
+    background: indianred;
+    color: white;
+    padding: 1rem;
+}
+
+.toast__dismiss {
+    margin-left: 1rem;
+}

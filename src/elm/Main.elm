@@ -36,6 +36,7 @@ type alias Model =
     , showSaveModal : Bool
     , pianoRoll : PianoRoll.Model
     , newNoteDuration : Music.Duration.Duration
+    , errorMessage : Maybe String
     }
 
 
@@ -53,6 +54,7 @@ initialModel =
     , showSaveModal = False
     , pianoRoll = PianoRoll.init
     , newNoteDuration = Music.Duration.whole
+    , errorMessage = Nothing
     }
 
 
@@ -77,6 +79,8 @@ type Msg
     | BrowserLoadedFile (Result Json.Decode.Error Project.Project)
       -- Setting tempo
     | UserTypedIntoTempoField String
+      -- Toast
+    | UserDismissedToast
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -159,7 +163,7 @@ update msg model =
                     ( { model | project = project }, Cmd.none )
 
                 Err error ->
-                    ( model, Cmd.none )
+                    ( { model | errorMessage = Just "Invalid file format" }, Cmd.none )
 
         UserClickedModalSaveButton ->
             ( { model | showSaveModal = False }
@@ -195,6 +199,11 @@ update msg model =
             , Cmd.none
             )
 
+        UserDismissedToast ->
+            ( { model | errorMessage = Nothing }
+            , Cmd.none
+            )
+
 
 view : Model -> { title : String, body : List (Html Msg) }
 view model =
@@ -213,8 +222,27 @@ view model =
         , viewNoteValueButtons
         , viewTempoField (Project.tempo model.project)
         , viewFileSaveModal model
+        , viewToast model
         ]
     }
+
+
+viewToast : Model -> Html Msg
+viewToast model =
+    case model.errorMessage of
+        Just message ->
+            Html.div
+                [ Html.Attributes.class "toast" ]
+                [ Html.text message
+                , Html.button
+                    [ Html.Attributes.class "toast__dismiss"
+                    , Html.Events.onClick UserDismissedToast
+                    ]
+                    [ Html.text "x" ]
+                ]
+
+        Nothing ->
+            Html.text ""
 
 
 viewFileSaveModal : Model -> Html Msg
