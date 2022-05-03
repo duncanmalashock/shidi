@@ -1,6 +1,7 @@
 module PianoRoll.Piano exposing (view)
 
 import Html exposing (Html)
+import Html.Attributes
 import Svg
 import Svg.Attributes as Attr
 import Svg.Events as Event
@@ -8,15 +9,22 @@ import Svg.Events as Event
 
 view : Int -> (Int -> msg) -> Html msg
 view height onClick =
-    List.range 0 9
-        |> List.reverse
-        |> List.map
-            (viewOctave
-                { onNoteClicked = onClick
-                , height = height
-                }
-            )
-        |> Html.div []
+    let
+        viewOctaves : List (Html.Html msg)
+        viewOctaves =
+            List.range 0 9
+                |> List.reverse
+                |> List.map
+                    (viewOctave
+                        { onNoteClicked = onClick
+                        , height = height
+                        }
+                    )
+    in
+    Html.div
+        [ Html.Attributes.class "piano"
+        ]
+        viewOctaves
 
 
 viewOctave :
@@ -149,7 +157,7 @@ viewOctave { onNoteClicked, height } octave =
     Svg.svg
         [ Attr.viewBox viewBoxAttr
         , Attr.width (String.fromInt whiteKeyWidth)
-        , Attr.class "piano"
+        , Attr.class "piano__octave"
         ]
         [ Svg.g []
             ([ 11, 9, 7, 5, 4, 2, 0 ]

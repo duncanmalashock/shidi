@@ -12,13 +12,17 @@ body {
 /* Piano roll */
 .piano-roll {
     cursor: pointer;
-    flex: 1 1 auto;
 }
 
 .piano-roll__wrapper {
     display: flex;
-    flex: 1 1 auto;
     position: relative;
+    flex: 1 1 auto;
+    overflow: auto;
+}
+
+.piano-roll__background {
+    display: flex;
 }
 
 .note-preview {
@@ -31,6 +35,9 @@ body {
 
 /* Piano */
 .piano {
+}
+
+.piano__octave {
     display: block;
 }
 

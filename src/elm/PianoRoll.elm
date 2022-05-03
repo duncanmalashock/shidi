@@ -19,6 +19,7 @@ import Html exposing (Html)
 import Html.Attributes
 import Html.Events
 import Json.Decode
+import Music
 import Music.Duration
 import Music.Event as Event
 import Music.Note
@@ -194,7 +195,7 @@ viewRollWrapper options =
     in
     Html.div
         [ Html.Attributes.class "piano-roll__wrapper" ]
-        [ viewRoll options
+        [ viewMeasureBackground options
         , viewNotes
             { project = options.project
             , model = options.model
@@ -213,20 +214,39 @@ viewRollWrapper options =
         ]
 
 
-viewRoll :
+viewMeasureBackground :
     { project : Project.Project
     , model : Model
     , newNoteValue : Music.Duration.Duration
     , toMsg : Msg -> msg
     }
     -> Html msg
-viewRoll options =
+viewMeasureBackground options =
+    Html.div
+        [ Html.Attributes.class "piano-roll__background"
+        ]
+        (List.map
+            (viewRoll options)
+            (Project.measures options.project)
+        )
+
+
+viewRoll :
+    { project : Project.Project
+    , model : Model
+    , newNoteValue : Music.Duration.Duration
+    , toMsg : Msg -> msg
+    }
+    -> Music.Measure
+    -> Html msg
+viewRoll options measure =
     let
         (Model model) =
             options.model
     in
     Html.div
         ([ Html.Attributes.class "piano-roll"
+         , Html.Attributes.style "width" "calc(8 * 21px)"
          , Html.Attributes.style "background-image"
             (backgroundImageAttr
                 { width = cellSizeX model.scaleX
