@@ -10,19 +10,31 @@ body {
 .row { display: flex ;}
 
 /* Piano roll */
-.piano-roll {
+.piano-roll__background {
     cursor: pointer;
+
 }
 
 .piano-roll__wrapper {
     display: flex;
-    position: relative;
     flex: 1 1 auto;
     overflow: auto;
 }
 
-.piano-roll__background {
+.piano-roll__measures {
     display: flex;
+}
+
+.piano-roll__measure {
+    display: flex;
+    position: relative;
+}
+
+.piano-roll__header {
+    position: absolute;
+    top: 0;
+    background: white;
+    width: 100%;
 }
 
 .note-preview {

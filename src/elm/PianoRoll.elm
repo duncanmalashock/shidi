@@ -223,9 +223,9 @@ viewMeasureBackground :
     -> Html msg
 viewMeasureBackground options =
     Html.div
-        [ Html.Attributes.class "piano-roll__background"
+        [ Html.Attributes.class "piano-roll__measures"
         ]
-        (List.map
+        (List.indexedMap
             (viewRoll options)
             (Project.measures options.project)
         )
@@ -237,26 +237,33 @@ viewRoll :
     , newNoteValue : Music.Duration.Duration
     , toMsg : Msg -> msg
     }
+    -> Int
     -> Music.Measure
     -> Html msg
-viewRoll options measure =
+viewRoll options index measure =
     let
         (Model model) =
             options.model
     in
     Html.div
-        ([ Html.Attributes.class "piano-roll"
-         , Html.Attributes.style "width" "calc(8 * 21px)"
-         , Html.Attributes.style "background-image"
-            (backgroundImageAttr
-                { width = cellSizeX model.scaleX
-                , height = cellSizeY model.scaleY
-                }
+        [ Html.Attributes.class "piano-roll__measure" ]
+        [ Html.div [ Html.Attributes.class "piano-roll__header" ]
+            [ Html.text (String.fromInt (index + 1))
+            ]
+        , Html.div
+            ([ Html.Attributes.class "piano-roll__background"
+             , Html.Attributes.style "width" "calc(8 * 21px)"
+             , Html.Attributes.style "background-image"
+                (backgroundImageAttr
+                    { width = cellSizeX model.scaleX
+                    , height = cellSizeY model.scaleY
+                    }
+                )
+             ]
+                ++ mouseEvents measure model.scaleX model.scaleY
             )
-         ]
-            ++ mouseEvents measure model.scaleX model.scaleY
-        )
-        []
+            []
+        ]
         |> Html.map options.toMsg
 
 
