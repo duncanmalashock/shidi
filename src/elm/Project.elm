@@ -75,7 +75,7 @@ defaultTempo =
 
 defaultMeasureLength : Int
 defaultMeasureLength =
-    4
+    16
 
 
 addNote : Event.Event Note.Note -> Project -> Project
