@@ -1,0 +1,57 @@
+.piano-roll {
+    display: flex;
+}
+
+/* Piano roll */
+.piano-roll__background {
+    cursor: pointer;
+}
+
+.piano-roll__wrapper {
+    display: flex;
+    flex: 1 1 auto;
+    overflow: auto;
+}
+
+.piano-roll__measures {
+    display: flex;
+}
+
+.piano-roll__measure {
+    display: flex;
+    position: relative;
+}
+
+.piano-roll__header {
+    position: absolute;
+    top: 0;
+    background: white;
+    width: 100%;
+}
+
+.note-preview {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: 3px;
+    pointer-events: none;
+}
+
+/* Piano */
+.piano {
+}
+
+.piano__octave {
+    display: block;
+}
+
+.piano__key:hover {
+    fill: yellow;
+    cursor: pointer;
+}
+
+.piano__text {
+    font-weight: bold;
+    font-family: sans-serif;
+    pointer-events: none;
+}

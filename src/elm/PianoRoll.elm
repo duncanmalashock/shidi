@@ -96,9 +96,9 @@ type Msg
 
 
 type OutMsg
-    = AddNote PitchEvent
-    | RemoveNote PitchEvent
-    | PlayNote Int
+    = ShouldAddNote PitchEvent
+    | ShouldRemoveNote PitchEvent
+    | ShouldPlayNote Int
 
 
 type alias PitchEvent =
@@ -137,7 +137,7 @@ update msg (Model model) =
             in
             ( Model model
             , Just
-                (AddNote pitchEvent)
+                (ShouldAddNote pitchEvent)
             )
 
         UserClickedRightMouseButton coordinate ->
@@ -147,12 +147,12 @@ update msg (Model model) =
                     fromMusicToPitchEvent coordinate
             in
             ( Model model
-            , Just (RemoveNote pitchEvent)
+            , Just (ShouldRemoveNote pitchEvent)
             )
 
         UserClickedPianoKey noteNumber ->
             ( Model model
-            , Just (PlayNote noteNumber)
+            , Just (ShouldPlayNote noteNumber)
             )
 
 
@@ -168,7 +168,9 @@ view options =
         (Model model) =
             options.model
     in
-    Html.div [ Html.Attributes.class "row" ]
+    Html.div
+        [ Html.Attributes.class "piano-roll"
+        ]
         [ PianoRoll.Piano.view
             (cellSizeY model.scaleY)
             (UserClickedPianoKey >> options.toMsg)
@@ -195,7 +197,7 @@ viewRollWrapper options =
     in
     Html.div
         [ Html.Attributes.class "piano-roll__wrapper" ]
-        [ viewMeasureBackground options
+        [ viewMeasures options
         , viewNotes
             { project = options.project
             , model = options.model
@@ -203,8 +205,10 @@ viewRollWrapper options =
         , case model.mousePosition of
             Just coordinate ->
                 viewNote
-                    options.model
-                    "#ffffff22"
+                    { scaleX = model.scaleX
+                    , scaleY = model.scaleY
+                    , color = "#ffffff22"
+                    }
                     { at = coordinate.at
                     , value = Music.Note.note coordinate.pitch options.newNoteValue
                     }
@@ -214,37 +218,41 @@ viewRollWrapper options =
         ]
 
 
-viewMeasureBackground :
+viewMeasures :
     { project : Project.Project
     , model : Model
     , newNoteValue : Music.Duration.Duration
     , toMsg : Msg -> msg
     }
     -> Html msg
-viewMeasureBackground options =
+viewMeasures options =
+    let
+        (Model model) =
+            options.model
+    in
     Html.div
         [ Html.Attributes.class "piano-roll__measures"
         ]
         (List.indexedMap
-            (viewRoll options)
+            (viewMeasure
+                { scaleX = model.scaleX
+                , scaleY = model.scaleY
+                , toMsg = options.toMsg
+                }
+            )
             (Project.measures options.project)
         )
 
 
-viewRoll :
-    { project : Project.Project
-    , model : Model
-    , newNoteValue : Music.Duration.Duration
+viewMeasure :
+    { scaleX : ScaleX
+    , scaleY : ScaleY
     , toMsg : Msg -> msg
     }
     -> Int
     -> Music.Measure
     -> Html msg
-viewRoll options index measure =
-    let
-        (Model model) =
-            options.model
-    in
+viewMeasure options index measure =
     Html.div
         [ Html.Attributes.class "piano-roll__measure" ]
         [ Html.div [ Html.Attributes.class "piano-roll__header" ]
@@ -255,12 +263,12 @@ viewRoll options index measure =
              , Html.Attributes.style "width" "calc(8 * 21px)"
              , Html.Attributes.style "background-image"
                 (backgroundImageAttr
-                    { width = cellSizeX model.scaleX
-                    , height = cellSizeY model.scaleY
+                    { width = cellSizeX options.scaleX
+                    , height = cellSizeY options.scaleY
                     }
                 )
              ]
-                ++ mouseEvents measure model.scaleX model.scaleY
+                ++ mouseEvents measure options.scaleX options.scaleY
             )
             []
         ]
@@ -269,17 +277,33 @@ viewRoll options index measure =
 
 viewNotes : { project : Project.Project, model : Model } -> Html msg
 viewNotes { project, model } =
+    let
+        (Model model_) =
+            model
+    in
     Project.noteEvents project
-        |> List.map (viewNote model "deeppink")
+        |> List.map
+            (viewNote
+                { scaleX = model_.scaleX
+                , scaleY = model_.scaleY
+                , color = "deeppink"
+                }
+            )
         |> Html.div []
 
 
-viewNote : Model -> String -> Event.Event Music.Note.Note -> Html msg
-viewNote (Model model) color noteEvent =
+viewNote :
+    { scaleX : ScaleX
+    , scaleY : ScaleY
+    , color : String
+    }
+    -> Event.Event Music.Note.Note
+    -> Html msg
+viewNote options noteEvent =
     let
         { x, y } =
             MusicCoordinate noteEvent.at (Music.Note.pitch noteEvent.value)
-                |> fromMusicToPixels model.scaleX model.scaleY
+                |> fromMusicToPixels options.scaleX options.scaleY
 
         noteDuration : Music.Duration.Duration
         noteDuration =
@@ -288,18 +312,18 @@ viewNote (Model model) color noteEvent =
         width : Int
         width =
             Music.Duration.multiplyByInt
-                (cellSizeX model.scaleX * 8)
+                (cellSizeX options.scaleX * 8)
                 noteDuration
                 |> Music.Duration.toFloat
                 |> Basics.round
 
         height : Int
         height =
-            cellSizeY model.scaleY
+            cellSizeY options.scaleY
     in
     Html.div
         [ Html.Attributes.class "note-preview"
-        , Html.Attributes.style "background" color
+        , Html.Attributes.style "background" options.color
         , Html.Attributes.style "border" "1px solid #ffffff66"
         , Html.Attributes.style "box-sizing" "border-box"
         , Html.Attributes.style "width" (String.fromInt width ++ "px")
@@ -340,7 +364,7 @@ mouseEvents measure scaleX scaleY =
                                 |> Json.Decode.map UserClickedRightMouseButton
 
                         else
-                            Json.Decode.fail "bad witch club 🧙\u{200D}♀️"
+                            Json.Decode.fail "bad witch club"
                     )
                     (Json.Decode.field "button" Json.Decode.int)
                 )

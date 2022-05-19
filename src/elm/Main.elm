@@ -62,31 +62,31 @@ initialModel =
 type
     Msg
     -- Piano roll
-    = PianoRollMsg PianoRoll.Msg
+    = ClientReceivedPianoRollMsg PianoRoll.Msg
       -- Playback
     | UserClickedPlayButton
-      -- Note add tool
-    | UserClickedNoteValueButton Music.Duration.Duration
       -- Saving to file
     | UserClickedSaveButton
     | UserClickedModalSaveButton
-    | BrowserFocusedOnFileNameField (Result Browser.Dom.Error ())
+    | ClientFocusedOnFileNameField (Result Browser.Dom.Error ())
     | UserTypedIntoNameField String
     | UserDismissedSaveModal
       -- Loading from file
     | UserClickedLoadButton
     | UserSelectedFile File.File
-    | BrowserLoadedFile (Result Json.Decode.Error Project.Project)
+    | ClientLoadedFile (Result Json.Decode.Error Project.Project)
+      -- Note add tool
+    | UserClickedNoteValueButton Music.Duration.Duration
       -- Setting tempo
     | UserTypedIntoTempoField String
       -- Toast
-    | UserDismissedToast
+    | UserClickedToastDismissButton
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        PianoRollMsg pianoRollMsg ->
+        ClientReceivedPianoRollMsg pianoRollMsg ->
             let
                 ( pianoRoll, maybeOutMsg ) =
                     PianoRoll.update
@@ -95,7 +95,7 @@ update msg model =
 
                 { cmd, updatedProject } =
                     case maybeOutMsg of
-                        Just (PianoRoll.AddNote pitchEvent) ->
+                        Just (PianoRoll.ShouldAddNote pitchEvent) ->
                             { cmd =
                                 Music.Pitch.toMIDINoteNumber pitchEvent.value
                                     |> Ports.playNote
@@ -107,7 +107,7 @@ update msg model =
                                         }
                             }
 
-                        Just (PianoRoll.RemoveNote pitchEvent) ->
+                        Just (PianoRoll.ShouldRemoveNote pitchEvent) ->
                             { cmd = Cmd.none
                             , updatedProject =
                                 Project.removeNote
@@ -117,7 +117,7 @@ update msg model =
                                     model.project
                             }
 
-                        Just (PianoRoll.PlayNote noteNumber) ->
+                        Just (PianoRoll.ShouldPlayNote noteNumber) ->
                             { cmd = Ports.playNote noteNumber
                             , updatedProject = model.project
                             }
@@ -141,10 +141,10 @@ update msg model =
             ( { model
                 | showSaveModal = True
               }
-            , Task.attempt BrowserFocusedOnFileNameField (Browser.Dom.focus "filename-input")
+            , Task.attempt ClientFocusedOnFileNameField (Browser.Dom.focus "filename-input")
             )
 
-        BrowserFocusedOnFileNameField _ ->
+        ClientFocusedOnFileNameField _ ->
             ( model, Cmd.none )
 
         UserClickedLoadButton ->
@@ -156,10 +156,10 @@ update msg model =
                     File.name file
                         |> String.dropRight (String.length ".shidi")
               }
-            , File.Load.load BrowserLoadedFile file
+            , File.Load.load ClientLoadedFile file
             )
 
-        BrowserLoadedFile result ->
+        ClientLoadedFile result ->
             case result of
                 Ok project ->
                     ( { model | project = project }, Cmd.none )
@@ -189,6 +189,7 @@ update msg model =
 
         UserTypedIntoTempoField newTempoString ->
             let
+                newTempo : Tempo.Tempo
                 newTempo =
                     case String.toInt newTempoString of
                         Just tempoBPM ->
@@ -201,7 +202,7 @@ update msg model =
             , Cmd.none
             )
 
-        UserDismissedToast ->
+        UserClickedToastDismissButton ->
             ( { model | errorMessage = Nothing }
             , Cmd.none
             )
@@ -214,7 +215,7 @@ view model =
         [ PianoRoll.view
             { project = model.project
             , model = model.pianoRoll
-            , toMsg = PianoRollMsg
+            , toMsg = ClientReceivedPianoRollMsg
             , newNoteValue = model.newNoteDuration
             }
         , viewControls model
@@ -245,7 +246,7 @@ viewToast model =
                 [ Html.text message
                 , Html.button
                     [ Html.Attributes.class "toast__dismiss"
-                    , Html.Events.onClick UserDismissedToast
+                    , Html.Events.onClick UserClickedToastDismissButton
                     ]
                     [ Html.text "x" ]
                 ]
