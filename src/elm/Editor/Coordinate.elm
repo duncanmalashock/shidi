@@ -6,7 +6,7 @@ module Editor.Coordinate exposing
     , fromPixelsToMusic
     )
 
-import Editor.Scale
+import Editor.Zoom
 import Music
 import Music.Duration
 import Music.Pitch
@@ -22,42 +22,42 @@ type alias MusicCoordinate =
     }
 
 
-pixelsXToStart : Editor.Scale.ScaleX -> Int -> Music.Duration.Duration
-pixelsXToStart scaleX x =
-    Music.Duration.multiplyByInt (x // Editor.Scale.cellSizeX scaleX) Music.Duration.eighth
+pixelsXToStart : Editor.Zoom.Zoom -> Int -> Music.Duration.Duration
+pixelsXToStart zoom x =
+    Music.Duration.multiplyByInt (x // Editor.Zoom.cellSizeX zoom) Music.Duration.eighth
 
 
-startToPixelsX : Editor.Scale.ScaleX -> Music.Duration.Duration -> Int
-startToPixelsX scaleX duration =
-    Basics.round (Music.Duration.toFloat duration * 8) * Editor.Scale.cellSizeX scaleX
+startToPixelsX : Editor.Zoom.Zoom -> Music.Duration.Duration -> Int
+startToPixelsX zoom duration =
+    Basics.round (Music.Duration.toFloat duration * 8) * Editor.Zoom.cellSizeX zoom
 
 
-pixelsYToPitch : Editor.Scale.ScaleY -> Int -> Music.Pitch.Pitch
-pixelsYToPitch scaleY y =
-    (131 - (y // Editor.Scale.cellSizeY scaleY))
+pixelsYToPitch : Editor.Zoom.Zoom -> Int -> Music.Pitch.Pitch
+pixelsYToPitch zoom y =
+    (131 - (y // Editor.Zoom.cellSizeY zoom))
         |> Music.Pitch.fromMIDINoteNumber
 
 
-pitchToPixelsY : Editor.Scale.ScaleY -> Music.Pitch.Pitch -> Int
-pitchToPixelsY scaleY pitch =
+pitchToPixelsY : Editor.Zoom.Zoom -> Music.Pitch.Pitch -> Int
+pitchToPixelsY zoom pitch =
     (131 - Music.Pitch.toMIDINoteNumber pitch)
-        * Editor.Scale.cellSizeY scaleY
+        * Editor.Zoom.cellSizeY zoom
 
 
-fromPixelsToMusic : Music.Measure -> Editor.Scale.ScaleX -> Editor.Scale.ScaleY -> PixelCoordinate -> MusicCoordinate
-fromPixelsToMusic measure scaleX scaleY { x, y } =
+fromPixelsToMusic : Music.Measure -> Editor.Zoom.Zoom -> PixelCoordinate -> MusicCoordinate
+fromPixelsToMusic measure zoom { x, y } =
     let
         xDuration : Music.Duration.Duration
         xDuration =
-            Music.Duration.add measure.start (pixelsXToStart scaleX x)
+            Music.Duration.add measure.start (pixelsXToStart zoom x)
     in
-    MusicCoordinate xDuration (pixelsYToPitch scaleY y)
+    MusicCoordinate xDuration (pixelsYToPitch zoom y)
 
 
-fromMusicToPixels : Editor.Scale.ScaleX -> Editor.Scale.ScaleY -> MusicCoordinate -> PixelCoordinate
-fromMusicToPixels scaleX scaleY { at, pitch } =
-    { x = startToPixelsX scaleX at
-    , y = pitchToPixelsY scaleY pitch
+fromMusicToPixels : Editor.Zoom.Zoom -> MusicCoordinate -> PixelCoordinate
+fromMusicToPixels zoom { at, pitch } =
+    { x = startToPixelsX zoom at
+    , y = pitchToPixelsY zoom pitch
     }
 
 

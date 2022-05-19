@@ -18,7 +18,7 @@ import Editor.Coordinate
 import Editor.Key
 import Editor.Measure
 import Editor.Piano
-import Editor.Scale
+import Editor.Zoom
 import Html exposing (Html)
 import Html.Attributes
 import Html.Events
@@ -34,8 +34,7 @@ import Project
 type Model
     = Model
         { mousePosition : Maybe Editor.Coordinate.MusicCoordinate
-        , scaleX : Editor.Scale.ScaleX
-        , scaleY : Editor.Scale.ScaleY
+        , zoom : Editor.Zoom.Zoom
         }
 
 
@@ -43,8 +42,7 @@ init : Model
 init =
     Model
         { mousePosition = Nothing
-        , scaleX = Editor.Scale.ScaleXMedium
-        , scaleY = Editor.Scale.ScaleYMedium
+        , zoom = Editor.Zoom.new
         }
 
 
@@ -133,14 +131,12 @@ view options =
         [ Html.Attributes.class "editor"
         ]
         [ viewMetadata
-            { scaleX = model.scaleX
-            , scaleY = model.scaleY
+            { zoom = model.zoom
             , toMsg = options.toMsg
             , measures = Project.measures options.project
             }
         , viewPianoRoll
-            { scaleX = model.scaleX
-            , scaleY = model.scaleY
+            { zoom = model.zoom
             , toMsg = options.toMsg
             , measures = Project.measures options.project
             , noteEvents = Project.noteEvents options.project
@@ -151,8 +147,7 @@ view options =
 
 
 viewMetadata :
-    { scaleX : Editor.Scale.ScaleX
-    , scaleY : Editor.Scale.ScaleY
+    { zoom : Editor.Zoom.Zoom
     , toMsg : Msg -> msg
     , measures : List Music.Measure
     }
@@ -174,8 +169,7 @@ viewMetadata options =
                 ]
                 (List.indexedMap
                     (viewMetadataMeasure
-                        { scaleX = options.scaleX
-                        , scaleY = options.scaleY
+                        { zoom = options.zoom
                         , toMsg = options.toMsg
                         }
                     )
@@ -191,8 +185,7 @@ viewMetadata options =
 
 
 viewMetadataMeasure :
-    { scaleX : Editor.Scale.ScaleX
-    , scaleY : Editor.Scale.ScaleY
+    { zoom : Editor.Zoom.Zoom
     , toMsg : Msg -> msg
     }
     -> Int
@@ -203,7 +196,7 @@ viewMetadataMeasure options index measure =
         width : Int
         width =
             Music.Duration.multiplyByInt
-                (Editor.Scale.cellSizeX options.scaleX * 8)
+                (Editor.Zoom.cellSizeX options.zoom * 8)
                 Music.Duration.eighth
                 |> Music.Duration.toFloat
                 |> Basics.round
@@ -219,8 +212,7 @@ viewMetadataMeasure options index measure =
 
 
 viewPianoRoll :
-    { scaleX : Editor.Scale.ScaleX
-    , scaleY : Editor.Scale.ScaleY
+    { zoom : Editor.Zoom.Zoom
     , toMsg : Msg -> msg
     , measures : List Music.Measure
     , noteEvents : List (Event.Event Music.Note.Note)
@@ -236,7 +228,7 @@ viewPianoRoll options =
                 [ Html.Attributes.class "piano-roll__piano"
                 ]
                 [ Editor.Piano.view
-                    (Editor.Scale.cellSizeY options.scaleY)
+                    (Editor.Zoom.cellSizeY options.zoom)
                     (UserClickedPianoKey >> options.toMsg)
                 ]
 
@@ -245,8 +237,7 @@ viewPianoRoll options =
             case options.mousePosition of
                 Just coordinate ->
                     viewNote
-                        { scaleX = options.scaleX
-                        , scaleY = options.scaleY
+                        { zoom = options.zoom
                         , color = "#ffffff22"
                         }
                         { at = coordinate.at
@@ -263,8 +254,7 @@ viewPianoRoll options =
                 ]
                 (List.map
                     (Editor.Measure.viewMeasure
-                        { scaleX = options.scaleX
-                        , scaleY = options.scaleY
+                        { zoom = options.zoom
                         , onMovedMouseOverGrid = UserMovedMouseOverGrid >> options.toMsg
                         , onClickedLeftMouseButton = UserClickedLeftMouseButton >> options.toMsg
                         , onClickedRightMouseButton = UserClickedRightMouseButton >> options.toMsg
@@ -273,8 +263,7 @@ viewPianoRoll options =
                     )
                     options.measures
                     ++ [ viewNotes
-                            { scaleX = options.scaleX
-                            , scaleY = options.scaleY
+                            { zoom = options.zoom
                             , noteEvents = options.noteEvents
                             }
                        , viewNotePreview
@@ -290,8 +279,7 @@ viewPianoRoll options =
 
 
 viewNotes :
-    { scaleX : Editor.Scale.ScaleX
-    , scaleY : Editor.Scale.ScaleY
+    { zoom : Editor.Zoom.Zoom
     , noteEvents : List (Event.Event Music.Note.Note)
     }
     -> Html msg
@@ -299,8 +287,7 @@ viewNotes options =
     Html.div []
         (List.map
             (viewNote
-                { scaleX = options.scaleX
-                , scaleY = options.scaleY
+                { zoom = options.zoom
                 , color = "deeppink"
                 }
             )
@@ -309,8 +296,7 @@ viewNotes options =
 
 
 viewNote :
-    { scaleX : Editor.Scale.ScaleX
-    , scaleY : Editor.Scale.ScaleY
+    { zoom : Editor.Zoom.Zoom
     , color : String
     }
     -> Event.Event Music.Note.Note
@@ -319,7 +305,7 @@ viewNote options noteEvent =
     let
         { x, y } =
             Editor.Coordinate.MusicCoordinate noteEvent.at (Music.Note.pitch noteEvent.value)
-                |> Editor.Coordinate.fromMusicToPixels options.scaleX options.scaleY
+                |> Editor.Coordinate.fromMusicToPixels options.zoom
 
         noteDuration : Music.Duration.Duration
         noteDuration =
@@ -328,14 +314,14 @@ viewNote options noteEvent =
         width : Int
         width =
             Music.Duration.multiplyByInt
-                (Editor.Scale.cellSizeX options.scaleX * 8)
+                (Editor.Zoom.cellSizeX options.zoom * 8)
                 noteDuration
                 |> Music.Duration.toFloat
                 |> Basics.round
 
         height : Int
         height =
-            Editor.Scale.cellSizeY options.scaleY
+            Editor.Zoom.cellSizeY options.zoom
     in
     Html.div
         [ Html.Attributes.class "note-preview"

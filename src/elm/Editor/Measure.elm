@@ -2,7 +2,7 @@ module Editor.Measure exposing (..)
 
 import Editor.Coordinate
 import Editor.Key
-import Editor.Scale
+import Editor.Zoom
 import Html exposing (Html)
 import Html.Attributes
 import Html.Events
@@ -11,8 +11,7 @@ import Music
 
 
 viewMeasure :
-    { scaleX : Editor.Scale.ScaleX
-    , scaleY : Editor.Scale.ScaleY
+    { zoom : Editor.Zoom.Zoom
     , onMovedMouseOverGrid : Editor.Coordinate.MusicCoordinate -> msg
     , onClickedLeftMouseButton : Editor.Coordinate.MusicCoordinate -> msg
     , onClickedRightMouseButton : Editor.Coordinate.MusicCoordinate -> msg
@@ -26,8 +25,8 @@ viewMeasure options measure =
          , Html.Attributes.style "width" "calc(8 * 21px)"
          , Html.Attributes.style "background-image"
             (backgroundImageAttr
-                { width = Editor.Scale.cellSizeX options.scaleX
-                , height = Editor.Scale.cellSizeY options.scaleY
+                { width = Editor.Zoom.cellSizeX options.zoom
+                , height = Editor.Zoom.cellSizeY options.zoom
                 }
             )
          ]
@@ -36,8 +35,7 @@ viewMeasure options measure =
                 , onClickedLeftMouseButton = options.onClickedLeftMouseButton
                 , onClickedRightMouseButton = options.onClickedRightMouseButton
                 , onMovedMouseAway = options.onMovedMouseAway
-                , scaleX = options.scaleX
-                , scaleY = options.scaleY
+                , zoom = options.zoom
                 , measure = measure
                 }
         )
@@ -49,8 +47,7 @@ mouseEvents :
     , onClickedLeftMouseButton : Editor.Coordinate.MusicCoordinate -> msg
     , onClickedRightMouseButton : Editor.Coordinate.MusicCoordinate -> msg
     , onMovedMouseAway : msg
-    , scaleX : Editor.Scale.ScaleX
-    , scaleY : Editor.Scale.ScaleY
+    , zoom : Editor.Zoom.Zoom
     , measure : Music.Measure
     }
     -> List (Html.Attribute msg)
@@ -63,8 +60,7 @@ mouseEvents options =
                     |> Json.Decode.map
                         (Editor.Coordinate.fromPixelsToMusic
                             options.measure
-                            options.scaleX
-                            options.scaleY
+                            options.zoom
                         )
                     |> Json.Decode.map options.onMovedMouseOverGrid
                 )
@@ -79,8 +75,7 @@ mouseEvents options =
                                 |> Json.Decode.map
                                     (Editor.Coordinate.fromPixelsToMusic
                                         options.measure
-                                        options.scaleX
-                                        options.scaleY
+                                        options.zoom
                                     )
                                 |> Json.Decode.map options.onClickedLeftMouseButton
 
@@ -89,8 +84,7 @@ mouseEvents options =
                                 |> Json.Decode.map
                                     (Editor.Coordinate.fromPixelsToMusic
                                         options.measure
-                                        options.scaleX
-                                        options.scaleY
+                                        options.zoom
                                     )
                                 |> Json.Decode.map options.onClickedRightMouseButton
 
