@@ -15,14 +15,11 @@ module Editor exposing
 -}
 
 import Editor.Coordinate
-import Editor.Key
 import Editor.Measure
 import Editor.Piano
 import Editor.Zoom
 import Html exposing (Html)
 import Html.Attributes
-import Html.Events
-import Json.Decode
 import Music
 import Music.Duration
 import Music.Event as Event
