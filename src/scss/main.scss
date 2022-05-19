@@ -7,12 +7,11 @@ body {
 }
 
 /* Layout */
-.row { display: flex ;}
+.row { display: flex; }
 
 /* Piano roll */
 .piano-roll__background {
     cursor: pointer;
-
 }
 
 .piano-roll__wrapper {
@@ -64,36 +63,23 @@ body {
     pointer-events: none;
 }
 
-.play-button {
+/* Buttons */
+
+.controls {
     position: fixed;
     top: 2rem;
     right: 2rem;
-}
-
-.save-button {
-    position: fixed;
-    top: 4rem;
-    right: 2rem;
-}
-
-.load-button {
-    position: fixed;
-    top: 6rem;
-    right: 2rem;
-}
-
-.noteValue-buttons {
-    position: fixed;
-    top: 8rem;
-    right: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+    gap: 0.5rem;
 }
 
 .tempo-field {
-    position: fixed;
-    top: 10rem;
-    right: 2rem;
     width: 3rem;
 }
+
+/* Modal */
 
 .modal {
     position: fixed;
@@ -113,6 +99,8 @@ body {
     height: 100%;
     background: rgba(0,0,0,0.25);
 }
+
+/* Toast */
 
 .toast {
     position: fixed;

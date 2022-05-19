@@ -2,7 +2,6 @@ module PianoRoll exposing
     ( Model, init
     , Msg, update, OutMsg(..)
     , view
-    , ClickAction(..)
     )
 
 {-|
@@ -93,22 +92,19 @@ type Msg
     | UserMovedMouseAway
     | UserClickedLeftMouseButton MusicCoordinate
     | UserClickedRightMouseButton MusicCoordinate
+    | UserClickedPianoKey Int
 
 
 type OutMsg
     = AddNote PitchEvent
     | RemoveNote PitchEvent
+    | PlayNote Int
 
 
 type alias PitchEvent =
     { at : Music.Duration.Duration
     , value : Music.Pitch.Pitch
     }
-
-
-type ClickAction
-    = ShouldAddNote
-    | ShouldRemoveNote
 
 
 update :
@@ -154,12 +150,16 @@ update msg (Model model) =
             , Just (RemoveNote pitchEvent)
             )
 
+        UserClickedPianoKey noteNumber ->
+            ( Model model
+            , Just (PlayNote noteNumber)
+            )
+
 
 view :
     { project : Project.Project
     , model : Model
     , toMsg : Msg -> msg
-    , onPianoKeyClick : Int -> msg
     , newNoteValue : Music.Duration.Duration
     }
     -> Html msg
@@ -171,7 +171,7 @@ view options =
     Html.div [ Html.Attributes.class "row" ]
         [ PianoRoll.Piano.view
             (cellSizeY model.scaleY)
-            options.onPianoKeyClick
+            (UserClickedPianoKey >> options.toMsg)
         , viewRollWrapper
             { project = options.project
             , model = options.model

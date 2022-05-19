@@ -1,7 +1,6 @@
 port module Ports exposing (playNote, playSong)
 
 import Json.Encode
-import Music
 import Music.Duration
 import Music.Event as Event
 import Music.Note as Note

@@ -18,6 +18,7 @@ import PianoRoll
 import Ports
 import Project
 import Task
+import Ui.Button
 
 
 main : Program () Model Msg
@@ -58,11 +59,10 @@ initialModel =
     }
 
 
-type Msg
-    = -- Piano keys
-      UserClickedPianoKey Int
-      -- Piano roll
-    | PianoRollMsg PianoRoll.Msg
+type
+    Msg
+    -- Piano roll
+    = PianoRollMsg PianoRoll.Msg
       -- Playback
     | UserClickedPlayButton
       -- Note add tool
@@ -86,9 +86,6 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        UserClickedPianoKey note ->
-            ( model, Ports.playNote note )
-
         PianoRollMsg pianoRollMsg ->
             let
                 ( pianoRoll, maybeOutMsg ) =
@@ -118,6 +115,11 @@ update msg model =
                                     , value = Music.Note.note pitchEvent.value model.newNoteDuration
                                     }
                                     model.project
+                            }
+
+                        Just (PianoRoll.PlayNote noteNumber) ->
+                            { cmd = Ports.playNote noteNumber
+                            , updatedProject = model.project
                             }
 
                         Nothing ->
@@ -162,7 +164,7 @@ update msg model =
                 Ok project ->
                     ( { model | project = project }, Cmd.none )
 
-                Err error ->
+                Err _ ->
                     ( { model | errorMessage = Just "Invalid file format" }, Cmd.none )
 
         UserClickedModalSaveButton ->
@@ -213,18 +215,25 @@ view model =
             { project = model.project
             , model = model.pianoRoll
             , toMsg = PianoRollMsg
-            , onPianoKeyClick = UserClickedPianoKey
             , newNoteValue = model.newNoteDuration
             }
-        , viewPlayButton
-        , viewSaveButton
-        , viewLoadButton
-        , viewNoteValueButtons
-        , viewTempoField (Project.tempo model.project)
+        , viewControls model
         , viewFileSaveModal model
         , viewToast model
         ]
     }
+
+
+viewControls : Model -> Html Msg
+viewControls model =
+    Html.div
+        [ Html.Attributes.class "controls" ]
+        [ viewPlayButton
+        , viewSaveButton
+        , viewLoadButton
+        , viewNoteValueButtons
+        , viewTempoField (Project.tempo model.project)
+        ]
 
 
 viewToast : Model -> Html Msg
@@ -248,7 +257,8 @@ viewToast model =
 viewFileSaveModal : Model -> Html Msg
 viewFileSaveModal model =
     if model.showSaveModal then
-        Html.div []
+        Html.div
+            []
             [ Html.div
                 [ Html.Attributes.class "modal-dismiss"
                 , Html.Events.onClick UserDismissedSaveModal
@@ -265,9 +275,10 @@ viewFileSaveModal model =
                     , Html.Attributes.id "filename-input"
                     ]
                     []
-                , Html.button
-                    []
-                    [ Html.text "Save" ]
+                , Ui.Button.view
+                    { label = "Save"
+                    , onClick = UserClickedModalSaveButton
+                    }
                 ]
             ]
 
@@ -277,52 +288,48 @@ viewFileSaveModal model =
 
 viewPlayButton : Html Msg
 viewPlayButton =
-    Html.button
-        [ Html.Attributes.class "play-button"
-        , Html.Events.onClick UserClickedPlayButton
-        ]
-        [ Html.text "Play" ]
+    Ui.Button.view
+        { label = "Play"
+        , onClick = UserClickedPlayButton
+        }
 
 
 viewSaveButton : Html Msg
 viewSaveButton =
-    Html.button
-        [ Html.Attributes.class "save-button"
-        , Html.Events.onClick UserClickedSaveButton
-        ]
-        [ Html.text "Save" ]
+    Ui.Button.view
+        { label = "Save"
+        , onClick = UserClickedSaveButton
+        }
 
 
 viewLoadButton : Html Msg
 viewLoadButton =
-    Html.button
-        [ Html.Attributes.class "load-button"
-        , Html.Events.onClick UserClickedLoadButton
-        ]
-        [ Html.text "Load" ]
+    Ui.Button.view
+        { label = "Load"
+        , onClick = UserClickedLoadButton
+        }
 
 
 viewNoteValueButtons : Html Msg
 viewNoteValueButtons =
     Html.div
-        [ Html.Attributes.class "noteValue-buttons"
-        ]
-        [ Html.button
-            [ Html.Events.onClick (UserClickedNoteValueButton Music.Duration.eighth)
-            ]
-            [ Html.text "1/8" ]
-        , Html.button
-            [ Html.Events.onClick (UserClickedNoteValueButton Music.Duration.quarter)
-            ]
-            [ Html.text "1/4" ]
-        , Html.button
-            [ Html.Events.onClick (UserClickedNoteValueButton Music.Duration.half)
-            ]
-            [ Html.text "1/2" ]
-        , Html.button
-            [ Html.Events.onClick (UserClickedNoteValueButton Music.Duration.whole)
-            ]
-            [ Html.text "1" ]
+        []
+        [ Ui.Button.view
+            { label = "1/8"
+            , onClick = UserClickedNoteValueButton Music.Duration.eighth
+            }
+        , Ui.Button.view
+            { label = "1/4"
+            , onClick = UserClickedNoteValueButton Music.Duration.quarter
+            }
+        , Ui.Button.view
+            { label = "1/2"
+            , onClick = UserClickedNoteValueButton Music.Duration.half
+            }
+        , Ui.Button.view
+            { label = "1"
+            , onClick = UserClickedNoteValueButton Music.Duration.whole
+            }
         ]
 
 
