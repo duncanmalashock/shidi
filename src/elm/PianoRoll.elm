@@ -169,82 +169,66 @@ view options =
             options.model
     in
     Html.div
-        [ Html.Attributes.class "piano-roll"
+        [ Html.Attributes.class "editor"
         ]
-        [ PianoRoll.Piano.view
-            (cellSizeY model.scaleY)
-            (UserClickedPianoKey >> options.toMsg)
-        , viewRollWrapper
-            { project = options.project
-            , model = options.model
+        [ viewMetadata
+            { scaleX = model.scaleX
+            , scaleY = model.scaleY
             , toMsg = options.toMsg
+            , measures = Project.measures options.project
+            }
+        , viewPianoRoll
+            { scaleX = model.scaleX
+            , scaleY = model.scaleY
+            , toMsg = options.toMsg
+            , measures = Project.measures options.project
+            , noteEvents = Project.noteEvents options.project
+            , mousePosition = model.mousePosition
             , newNoteValue = options.newNoteValue
             }
         ]
 
 
-viewRollWrapper :
-    { project : Project.Project
-    , model : Model
+viewMetadata :
+    { scaleX : ScaleX
+    , scaleY : ScaleY
     , toMsg : Msg -> msg
-    , newNoteValue : Music.Duration.Duration
+    , measures : List Music.Measure
     }
     -> Html msg
-viewRollWrapper options =
+viewMetadata options =
     let
-        (Model model) =
-            options.model
+        viewShim : Html msg
+        viewShim =
+            Html.div
+                [ Html.Attributes.class "metadata__shim"
+                ]
+                []
+
+        viewMeasures : Html msg
+        viewMeasures =
+            Html.div
+                [ Html.Attributes.class "metadata__measures"
+                ]
+                (List.indexedMap
+                    (viewMetadataMeasure
+                        { scaleX = options.scaleX
+                        , scaleY = options.scaleY
+                        , toMsg = options.toMsg
+                        }
+                    )
+                    options.measures
+                )
     in
     Html.div
-        [ Html.Attributes.class "piano-roll__wrapper" ]
-        [ viewMeasures options
-        , viewNotes
-            { project = options.project
-            , model = options.model
-            }
-        , case model.mousePosition of
-            Just coordinate ->
-                viewNote
-                    { scaleX = model.scaleX
-                    , scaleY = model.scaleY
-                    , color = "#ffffff22"
-                    }
-                    { at = coordinate.at
-                    , value = Music.Note.note coordinate.pitch options.newNoteValue
-                    }
-
-            Nothing ->
-                Html.text ""
+        [ Html.Attributes.class "metadata"
+        ]
+        [ viewShim
+        , viewMeasures
         ]
 
 
-viewMeasures :
-    { project : Project.Project
-    , model : Model
-    , newNoteValue : Music.Duration.Duration
-    , toMsg : Msg -> msg
-    }
-    -> Html msg
-viewMeasures options =
-    let
-        (Model model) =
-            options.model
-    in
-    Html.div
-        [ Html.Attributes.class "piano-roll__measures"
-        ]
-        (List.indexedMap
-            (viewMeasure
-                { scaleX = model.scaleX
-                , scaleY = model.scaleY
-                , toMsg = options.toMsg
-                }
-            )
-            (Project.measures options.project)
-        )
-
-
-viewMeasure :
+viewMetadataMeasure :
     { scaleX : ScaleX
     , scaleY : ScaleY
     , toMsg : Msg -> msg
@@ -252,44 +236,134 @@ viewMeasure :
     -> Int
     -> Music.Measure
     -> Html msg
-viewMeasure options index measure =
+viewMetadataMeasure options index measure =
+    let
+        width : Int
+        width =
+            Music.Duration.multiplyByInt
+                (cellSizeX options.scaleX * 8)
+                Music.Duration.eighth
+                |> Music.Duration.toFloat
+                |> Basics.round
+                |> (*) 8
+    in
     Html.div
-        [ Html.Attributes.class "piano-roll__measure" ]
-        [ Html.div [ Html.Attributes.class "piano-roll__header" ]
-            [ Html.text (String.fromInt (index + 1))
-            ]
-        , Html.div
-            ([ Html.Attributes.class "piano-roll__background"
-             , Html.Attributes.style "width" "calc(8 * 21px)"
-             , Html.Attributes.style "background-image"
-                (backgroundImageAttr
-                    { width = cellSizeX options.scaleX
-                    , height = cellSizeY options.scaleY
-                    }
-                )
-             ]
-                ++ mouseEvents measure options.scaleX options.scaleY
-            )
-            []
+        [ Html.Attributes.class "metadata__measure"
+        , Html.Attributes.style "width" (String.fromInt width ++ "px")
+        ]
+        [ Html.text (String.fromInt (index + 1))
         ]
         |> Html.map options.toMsg
 
 
-viewNotes : { project : Project.Project, model : Model } -> Html msg
-viewNotes { project, model } =
+viewPianoRoll :
+    { scaleX : ScaleX
+    , scaleY : ScaleY
+    , toMsg : Msg -> msg
+    , measures : List Music.Measure
+    , noteEvents : List (Event.Event Music.Note.Note)
+    , newNoteValue : Music.Duration.Duration
+    , mousePosition : Maybe MusicCoordinate
+    }
+    -> Html msg
+viewPianoRoll options =
     let
-        (Model model_) =
-            model
+        viewPiano : Html msg
+        viewPiano =
+            Html.div
+                [ Html.Attributes.class "piano-roll__piano"
+                ]
+                [ PianoRoll.Piano.view
+                    (cellSizeY options.scaleY)
+                    (UserClickedPianoKey >> options.toMsg)
+                ]
+
+        viewNotePreview =
+            case options.mousePosition of
+                Just coordinate ->
+                    viewNote
+                        { scaleX = options.scaleX
+                        , scaleY = options.scaleY
+                        , color = "#ffffff22"
+                        }
+                        { at = coordinate.at
+                        , value = Music.Note.note coordinate.pitch options.newNoteValue
+                        }
+
+                Nothing ->
+                    Html.text ""
+
+        viewMeasures : Html msg
+        viewMeasures =
+            Html.div
+                [ Html.Attributes.class "piano-roll__measures"
+                ]
+                (List.map
+                    (viewMeasure
+                        { scaleX = options.scaleX
+                        , scaleY = options.scaleY
+                        , toMsg = options.toMsg
+                        }
+                    )
+                    options.measures
+                    ++ [ viewNotes
+                            { scaleX = options.scaleX
+                            , scaleY = options.scaleY
+                            , noteEvents = options.noteEvents
+                            }
+                       , viewNotePreview
+                       ]
+                )
     in
-    Project.noteEvents project
-        |> List.map
+    Html.div
+        [ Html.Attributes.class "piano-roll"
+        ]
+        [ viewPiano
+        , viewMeasures
+        ]
+
+
+viewMeasure :
+    { scaleX : ScaleX
+    , scaleY : ScaleY
+    , toMsg : Msg -> msg
+    }
+    -> Music.Measure
+    -> Html msg
+viewMeasure options measure =
+    Html.div
+        ([ Html.Attributes.class "piano-roll__measure"
+         , Html.Attributes.style "width" "calc(8 * 21px)"
+         , Html.Attributes.style "background-image"
+            (backgroundImageAttr
+                { width = cellSizeX options.scaleX
+                , height = cellSizeY options.scaleY
+                }
+            )
+         ]
+            ++ mouseEvents measure options.scaleX options.scaleY
+        )
+        []
+        |> Html.map options.toMsg
+
+
+viewNotes :
+    { scaleX : ScaleX
+    , scaleY : ScaleY
+    , noteEvents : List (Event.Event Music.Note.Note)
+    }
+    -> Html msg
+viewNotes options =
+    Html.div []
+        (List.map
             (viewNote
-                { scaleX = model_.scaleX
-                , scaleY = model_.scaleY
+                { scaleX = options.scaleX
+                , scaleY = options.scaleY
                 , color = "deeppink"
                 }
             )
-        |> Html.div []
+            options.noteEvents
+        )
 
 
 viewNote :

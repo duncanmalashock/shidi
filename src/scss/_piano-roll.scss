@@ -1,32 +1,65 @@
-.piano-roll {
-    display: flex;
+.editor {
+  display: flex;
+  flex-direction: column;
 }
+
+.metadata {
+  display: flex;
+  flex-direction: row;
+  flex: 0 0 auto;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.metadata__shim {
+  flex: 0 0 auto;
+  position: sticky;
+  left: 0;
+  background: white;
+  width: 37px;
+}
+
+.metadata__measures {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: row;
+  background: white;
+}
+
+.metadata__measure {
+}
+
+.piano-roll {
+  display: flex;
+  flex-direction: row;
+  flex: 1 1 auto;
+}
+
+.piano-roll__piano {
+  flex: 0 0 auto;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+
+.piano-roll__measures {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: row;
+  position: relative;
+  cursor: pointer;
+}
+
+.piano-roll__measure {
+  background: black;
+}
+
+
 
 /* Piano roll */
 .piano-roll__background {
     cursor: pointer;
-}
-
-.piano-roll__wrapper {
-    display: flex;
-    flex: 1 1 auto;
-    overflow: auto;
-}
-
-.piano-roll__measures {
-    display: flex;
-}
-
-.piano-roll__measure {
-    display: flex;
-    position: relative;
-}
-
-.piano-roll__header {
-    position: absolute;
-    top: 0;
-    background: white;
-    width: 100%;
 }
 
 .note-preview {
@@ -37,9 +70,9 @@
     pointer-events: none;
 }
 
-/* Piano */
-.piano {
-}
+
+
+
 
 .piano__octave {
     display: block;
