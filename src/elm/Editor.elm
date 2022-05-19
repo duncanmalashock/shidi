@@ -30,7 +30,7 @@ import Project
 
 type Model
     = Model
-        { mousePosition : Maybe Editor.Coordinate.MusicCoordinate
+        { mousePosition : Maybe Editor.Coordinate.Music
         , zoom : Editor.Zoom.Zoom
         }
 
@@ -44,10 +44,10 @@ init =
 
 
 type Msg
-    = UserMovedMouseOverGrid Editor.Coordinate.MusicCoordinate
+    = UserMovedMouseOverGrid Editor.Coordinate.Music
     | UserMovedMouseAway
-    | UserClickedLeftMouseButton Editor.Coordinate.MusicCoordinate
-    | UserClickedRightMouseButton Editor.Coordinate.MusicCoordinate
+    | UserClickedLeftMouseButton Editor.Coordinate.Music
+    | UserClickedRightMouseButton Editor.Coordinate.Music
     | UserClickedPianoKey Int
 
 
@@ -60,6 +60,13 @@ type OutMsg
 type alias PitchEvent =
     { at : Music.Duration.Duration
     , value : Music.Pitch.Pitch
+    }
+
+
+fromMusicToPitchEvent : Editor.Coordinate.Music -> PitchEvent
+fromMusicToPitchEvent { at, pitch } =
+    { at = at
+    , value = pitch
     }
 
 
@@ -89,7 +96,7 @@ update msg (Model model) =
             let
                 pitchEvent : PitchEvent
                 pitchEvent =
-                    Editor.Coordinate.fromMusicToPitchEvent coordinate
+                    fromMusicToPitchEvent coordinate
             in
             ( Model model
             , Just
@@ -100,7 +107,7 @@ update msg (Model model) =
             let
                 pitchEvent : PitchEvent
                 pitchEvent =
-                    Editor.Coordinate.fromMusicToPitchEvent coordinate
+                    fromMusicToPitchEvent coordinate
             in
             ( Model model
             , Just (ShouldRemoveNote pitchEvent)
@@ -214,7 +221,7 @@ viewPianoRoll :
     , measures : List Music.Measure
     , noteEvents : List (Event.Event Music.Note.Note)
     , newNoteValue : Music.Duration.Duration
-    , mousePosition : Maybe Editor.Coordinate.MusicCoordinate
+    , mousePosition : Maybe Editor.Coordinate.Music
     }
     -> Html msg
 viewPianoRoll options =
@@ -250,7 +257,7 @@ viewPianoRoll options =
                 [ Html.Attributes.class "piano-roll__content"
                 ]
                 (List.map
-                    (Editor.Measure.viewMeasure
+                    (Editor.Measure.view
                         { zoom = options.zoom
                         , onMovedMouseOverGrid = UserMovedMouseOverGrid >> options.toMsg
                         , onClickedLeftMouseButton = UserClickedLeftMouseButton >> options.toMsg
@@ -301,7 +308,7 @@ viewNote :
 viewNote options noteEvent =
     let
         { x, y } =
-            Editor.Coordinate.MusicCoordinate noteEvent.at (Music.Note.pitch noteEvent.value)
+            Editor.Coordinate.Music noteEvent.at (Music.Note.pitch noteEvent.value)
                 |> Editor.Coordinate.fromMusicToPixels options.zoom
 
         noteDuration : Music.Duration.Duration

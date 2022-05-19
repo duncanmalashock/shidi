@@ -1,4 +1,4 @@
-module Editor.Measure exposing (..)
+module Editor.Measure exposing (view)
 
 import Editor.Coordinate
 import Editor.Key
@@ -10,16 +10,16 @@ import Json.Decode
 import Music
 
 
-viewMeasure :
+view :
     { zoom : Editor.Zoom.Zoom
-    , onMovedMouseOverGrid : Editor.Coordinate.MusicCoordinate -> msg
-    , onClickedLeftMouseButton : Editor.Coordinate.MusicCoordinate -> msg
-    , onClickedRightMouseButton : Editor.Coordinate.MusicCoordinate -> msg
+    , onMovedMouseOverGrid : Editor.Coordinate.Music -> msg
+    , onClickedLeftMouseButton : Editor.Coordinate.Music -> msg
+    , onClickedRightMouseButton : Editor.Coordinate.Music -> msg
     , onMovedMouseAway : msg
     }
     -> Music.Measure
     -> Html msg
-viewMeasure options measure =
+view options measure =
     Html.div
         ([ Html.Attributes.class "piano-roll__measure"
          , Html.Attributes.style "width" "calc(8 * 21px)"
@@ -43,9 +43,9 @@ viewMeasure options measure =
 
 
 mouseEvents :
-    { onMovedMouseOverGrid : Editor.Coordinate.MusicCoordinate -> msg
-    , onClickedLeftMouseButton : Editor.Coordinate.MusicCoordinate -> msg
-    , onClickedRightMouseButton : Editor.Coordinate.MusicCoordinate -> msg
+    { onMovedMouseOverGrid : Editor.Coordinate.Music -> msg
+    , onClickedLeftMouseButton : Editor.Coordinate.Music -> msg
+    , onClickedRightMouseButton : Editor.Coordinate.Music -> msg
     , onMovedMouseAway : msg
     , zoom : Editor.Zoom.Zoom
     , measure : Music.Measure
@@ -94,10 +94,10 @@ mouseEvents options =
                     (Json.Decode.field "button" Json.Decode.int)
                 )
 
-        offsetDecoder : Json.Decode.Decoder Editor.Coordinate.PixelCoordinate
+        offsetDecoder : Json.Decode.Decoder Editor.Coordinate.Pixel
         offsetDecoder =
             Json.Decode.map2
-                Editor.Coordinate.PixelCoordinate
+                Editor.Coordinate.Pixel
                 (Json.Decode.field "offsetX" Json.Decode.int)
                 (Json.Decode.field "offsetY" Json.Decode.int)
     in

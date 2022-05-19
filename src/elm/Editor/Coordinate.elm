@@ -1,7 +1,6 @@
 module Editor.Coordinate exposing
-    ( MusicCoordinate
-    , PixelCoordinate
-    , fromMusicToPitchEvent
+    ( Music
+    , Pixel
     , fromMusicToPixels
     , fromPixelsToMusic
     )
@@ -12,11 +11,11 @@ import Music.Duration
 import Music.Pitch
 
 
-type alias PixelCoordinate =
+type alias Pixel =
     { x : Int, y : Int }
 
 
-type alias MusicCoordinate =
+type alias Music =
     { at : Music.Duration.Duration
     , pitch : Music.Pitch.Pitch
     }
@@ -44,31 +43,18 @@ pitchToPixelsY zoom pitch =
         * Editor.Zoom.cellSizeY zoom
 
 
-fromPixelsToMusic : Music.Measure -> Editor.Zoom.Zoom -> PixelCoordinate -> MusicCoordinate
+fromPixelsToMusic : Music.Measure -> Editor.Zoom.Zoom -> Pixel -> Music
 fromPixelsToMusic measure zoom { x, y } =
     let
         xDuration : Music.Duration.Duration
         xDuration =
             Music.Duration.add measure.start (pixelsXToStart zoom x)
     in
-    MusicCoordinate xDuration (pixelsYToPitch zoom y)
+    Music xDuration (pixelsYToPitch zoom y)
 
 
-fromMusicToPixels : Editor.Zoom.Zoom -> MusicCoordinate -> PixelCoordinate
+fromMusicToPixels : Editor.Zoom.Zoom -> Music -> Pixel
 fromMusicToPixels zoom { at, pitch } =
     { x = startToPixelsX zoom at
     , y = pitchToPixelsY zoom pitch
-    }
-
-
-fromMusicToPitchEvent : MusicCoordinate -> PitchEvent
-fromMusicToPitchEvent { at, pitch } =
-    { at = at
-    , value = pitch
-    }
-
-
-type alias PitchEvent =
-    { at : Music.Duration.Duration
-    , value : Music.Pitch.Pitch
     }
