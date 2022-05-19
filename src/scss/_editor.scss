@@ -62,7 +62,14 @@
     pointer-events: none;
 }
 
-.piano__key:hover {
-    fill: yellow;
-    cursor: pointer;
+.piano__key {
+  cursor: pointer;
+}
+
+.piano__key.piano__key--white:hover {
+  fill: #f9f9f9;
+}
+
+.piano__key.piano__key--black:hover {
+  fill: #454545;
 }
