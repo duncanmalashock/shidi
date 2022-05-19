@@ -278,6 +278,7 @@ viewPianoRoll options =
                     (UserClickedPianoKey >> options.toMsg)
                 ]
 
+        viewNotePreview : Html msg
         viewNotePreview =
             case options.mousePosition of
                 Just coordinate ->
@@ -293,10 +294,10 @@ viewPianoRoll options =
                 Nothing ->
                     Html.text ""
 
-        viewMeasures : Html msg
-        viewMeasures =
+        viewContent : Html msg
+        viewContent =
             Html.div
-                [ Html.Attributes.class "piano-roll__measures"
+                [ Html.Attributes.class "piano-roll__content"
                 ]
                 (List.map
                     (viewMeasure
@@ -319,7 +320,7 @@ viewPianoRoll options =
         [ Html.Attributes.class "piano-roll"
         ]
         [ viewPiano
-        , viewMeasures
+        , viewContent
         ]
 
 
