@@ -17,7 +17,6 @@
   position: sticky;
   left: 0;
   background: white;
-  width: 37px;
 }
 
 .metadata__measures {
@@ -52,14 +51,6 @@
 }
 
 .piano-roll__measure {
-  background: black;
-}
-
-
-
-/* Piano roll */
-.piano-roll__background {
-    cursor: pointer;
 }
 
 .note-preview {
@@ -70,21 +61,7 @@
     pointer-events: none;
 }
 
-
-
-
-
-.piano__octave {
-    display: block;
-}
-
 .piano__key:hover {
     fill: yellow;
     cursor: pointer;
-}
-
-.piano__text {
-    font-weight: bold;
-    font-family: sans-serif;
-    pointer-events: none;
 }

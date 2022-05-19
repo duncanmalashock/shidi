@@ -1,4 +1,4 @@
-module PianoRoll.Key exposing (Key, view)
+module Editor.Key exposing (Key, view)
 
 
 type Key

@@ -2,6 +2,7 @@ module Main exposing (main)
 
 import Browser
 import Browser.Dom
+import Editor
 import File
 import File.Load
 import File.Save
@@ -14,7 +15,6 @@ import Music.Duration
 import Music.Note
 import Music.Pitch
 import Music.Tempo as Tempo
-import PianoRoll
 import Ports
 import Project
 import Task
@@ -35,7 +35,7 @@ type alias Model =
     { project : Project.Project
     , fileName : String
     , showSaveModal : Bool
-    , pianoRoll : PianoRoll.Model
+    , editor : Editor.Model
     , newNoteDuration : Music.Duration.Duration
     , errorMessage : Maybe String
     }
@@ -53,7 +53,7 @@ initialModel =
     { project = Project.empty
     , fileName = ""
     , showSaveModal = False
-    , pianoRoll = PianoRoll.init
+    , editor = Editor.init
     , newNoteDuration = Music.Duration.whole
     , errorMessage = Nothing
     }
@@ -61,8 +61,8 @@ initialModel =
 
 type
     Msg
-    -- Piano roll
-    = ClientReceivedPianoRollMsg PianoRoll.Msg
+    -- Editor
+    = ClientReceivedEditorMsg Editor.Msg
       -- Playback
     | UserClickedPlayButton
       -- Saving to file
@@ -86,16 +86,16 @@ type
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ClientReceivedPianoRollMsg pianoRollMsg ->
+        ClientReceivedEditorMsg editorMsg ->
             let
-                ( pianoRoll, maybeOutMsg ) =
-                    PianoRoll.update
-                        pianoRollMsg
-                        model.pianoRoll
+                ( editor, maybeOutMsg ) =
+                    Editor.update
+                        editorMsg
+                        model.editor
 
                 { cmd, updatedProject } =
                     case maybeOutMsg of
-                        Just (PianoRoll.ShouldAddNote pitchEvent) ->
+                        Just (Editor.ShouldAddNote pitchEvent) ->
                             { cmd =
                                 Music.Pitch.toMIDINoteNumber pitchEvent.value
                                     |> Ports.playNote
@@ -107,7 +107,7 @@ update msg model =
                                         }
                             }
 
-                        Just (PianoRoll.ShouldRemoveNote pitchEvent) ->
+                        Just (Editor.ShouldRemoveNote pitchEvent) ->
                             { cmd = Cmd.none
                             , updatedProject =
                                 Project.removeNote
@@ -117,7 +117,7 @@ update msg model =
                                     model.project
                             }
 
-                        Just (PianoRoll.ShouldPlayNote noteNumber) ->
+                        Just (Editor.ShouldPlayNote noteNumber) ->
                             { cmd = Ports.playNote noteNumber
                             , updatedProject = model.project
                             }
@@ -128,7 +128,7 @@ update msg model =
                             }
             in
             ( { model
-                | pianoRoll = pianoRoll
+                | editor = editor
                 , project = updatedProject
               }
             , cmd
@@ -212,10 +212,10 @@ view : Model -> { title : String, body : List (Html Msg) }
 view model =
     { title = "shidi"
     , body =
-        [ PianoRoll.view
+        [ Editor.view
             { project = model.project
-            , model = model.pianoRoll
-            , toMsg = ClientReceivedPianoRollMsg
+            , model = model.editor
+            , toMsg = ClientReceivedEditorMsg
             , newNoteValue = model.newNoteDuration
             }
         , viewControls model

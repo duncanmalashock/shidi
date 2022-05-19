@@ -1,4 +1,4 @@
-module PianoRoll exposing
+module Editor exposing
     ( Model, init
     , Msg, update, OutMsg(..)
     , view
@@ -14,6 +14,8 @@ module PianoRoll exposing
 
 -}
 
+import Editor.Key
+import Editor.Piano
 import Html exposing (Html)
 import Html.Attributes
 import Html.Events
@@ -23,8 +25,6 @@ import Music.Duration
 import Music.Event as Event
 import Music.Note
 import Music.Pitch
-import PianoRoll.Key
-import PianoRoll.Piano
 import Project
 
 
@@ -202,6 +202,7 @@ viewMetadata options =
         viewShim =
             Html.div
                 [ Html.Attributes.class "metadata__shim"
+                , Html.Attributes.style "width" "37px"
                 ]
                 []
 
@@ -273,7 +274,7 @@ viewPianoRoll options =
             Html.div
                 [ Html.Attributes.class "piano-roll__piano"
                 ]
-                [ PianoRoll.Piano.view
+                [ Editor.Piano.view
                     (cellSizeY options.scaleY)
                     (UserClickedPianoKey >> options.toMsg)
                 ]
@@ -460,7 +461,7 @@ mouseEvents measure scaleX scaleY =
 backgroundImageAttr : { height : Int, width : Int } -> String
 backgroundImageAttr options =
     gridBackground
-        |> String.replace "$keys" (PianoRoll.Key.view options.height)
+        |> String.replace "$keys" (Editor.Key.view options.height)
         |> String.replace "$verticalLines"
             (List.range 0 4
                 |> List.map (viewVerticalLine options)

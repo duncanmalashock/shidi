@@ -1,4 +1,4 @@
-module PianoRoll.Piano exposing (view)
+module Editor.Piano exposing (view)
 
 import Html exposing (Html)
 import Html.Attributes
@@ -93,17 +93,28 @@ viewOctave { onNoteClicked, height } octave =
                 |> List.map String.fromInt
                 |> String.join " "
 
+        semitoneOffset : Int
         semitoneOffset =
             (octave + 1) * 12
 
         viewCKeyLabel : Int -> Svg.Svg msg
         viewCKeyLabel octave_ =
+            let
+                styles : String
+                styles =
+                    [ "font-size: " ++ (String.fromInt fontSize ++ "px")
+                    , "font-weight: bold"
+                    , "font-family: sans-serif"
+                    , "pointer-events: none"
+                    ]
+                        |> String.join "; "
+            in
             Svg.text_
                 [ Attr.x <| String.fromInt (whiteKeyWidth - cKeyLabelRightOffset)
                 , Attr.y <| String.fromInt (octaveHeight - cKeyLabelBottomOffset)
                 , Attr.fill "black"
                 , Attr.class "piano__text"
-                , Attr.style ("font-size: " ++ (String.fromInt fontSize ++ "px"))
+                , Attr.style styles
                 ]
                 [ Svg.text <| "C" ++ String.fromInt octave_ ]
 
@@ -157,7 +168,7 @@ viewOctave { onNoteClicked, height } octave =
     Svg.svg
         [ Attr.viewBox viewBoxAttr
         , Attr.width (String.fromInt whiteKeyWidth)
-        , Attr.class "piano__octave"
+        , Attr.style "display: block"
         ]
         [ Svg.g []
             ([ 11, 9, 7, 5, 4, 2, 0 ]
