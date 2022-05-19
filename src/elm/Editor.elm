@@ -14,8 +14,11 @@ module Editor exposing
 
 -}
 
+import Editor.Coordinate
 import Editor.Key
+import Editor.Measure
 import Editor.Piano
+import Editor.Scale
 import Html exposing (Html)
 import Html.Attributes
 import Html.Events
@@ -28,53 +31,11 @@ import Music.Pitch
 import Project
 
 
-type ScaleX
-    = ScaleXSmall
-    | ScaleXMedium
-    | ScaleXLarge
-    | ScaleXGiant
-
-
-cellSizeX : ScaleX -> Int
-cellSizeX scaleX =
-    case scaleX of
-        ScaleXSmall ->
-            14
-
-        ScaleXMedium ->
-            21
-
-        ScaleXLarge ->
-            36
-
-        ScaleXGiant ->
-            50
-
-
-type ScaleY
-    = ScaleYSmall
-    | ScaleYMedium
-    | ScaleYLarge
-
-
-cellSizeY : ScaleY -> Int
-cellSizeY scaleY =
-    case scaleY of
-        ScaleYSmall ->
-            14
-
-        ScaleYMedium ->
-            21
-
-        ScaleYLarge ->
-            28
-
-
 type Model
     = Model
-        { mousePosition : Maybe MusicCoordinate
-        , scaleX : ScaleX
-        , scaleY : ScaleY
+        { mousePosition : Maybe Editor.Coordinate.MusicCoordinate
+        , scaleX : Editor.Scale.ScaleX
+        , scaleY : Editor.Scale.ScaleY
         }
 
 
@@ -82,16 +43,16 @@ init : Model
 init =
     Model
         { mousePosition = Nothing
-        , scaleX = ScaleXMedium
-        , scaleY = ScaleYMedium
+        , scaleX = Editor.Scale.ScaleXMedium
+        , scaleY = Editor.Scale.ScaleYMedium
         }
 
 
 type Msg
-    = UserMovedMouseOverGrid MusicCoordinate
+    = UserMovedMouseOverGrid Editor.Coordinate.MusicCoordinate
     | UserMovedMouseAway
-    | UserClickedLeftMouseButton MusicCoordinate
-    | UserClickedRightMouseButton MusicCoordinate
+    | UserClickedLeftMouseButton Editor.Coordinate.MusicCoordinate
+    | UserClickedRightMouseButton Editor.Coordinate.MusicCoordinate
     | UserClickedPianoKey Int
 
 
@@ -133,7 +94,7 @@ update msg (Model model) =
             let
                 pitchEvent : PitchEvent
                 pitchEvent =
-                    fromMusicToPitchEvent coordinate
+                    Editor.Coordinate.fromMusicToPitchEvent coordinate
             in
             ( Model model
             , Just
@@ -144,7 +105,7 @@ update msg (Model model) =
             let
                 pitchEvent : PitchEvent
                 pitchEvent =
-                    fromMusicToPitchEvent coordinate
+                    Editor.Coordinate.fromMusicToPitchEvent coordinate
             in
             ( Model model
             , Just (ShouldRemoveNote pitchEvent)
@@ -190,8 +151,8 @@ view options =
 
 
 viewMetadata :
-    { scaleX : ScaleX
-    , scaleY : ScaleY
+    { scaleX : Editor.Scale.ScaleX
+    , scaleY : Editor.Scale.ScaleY
     , toMsg : Msg -> msg
     , measures : List Music.Measure
     }
@@ -230,8 +191,8 @@ viewMetadata options =
 
 
 viewMetadataMeasure :
-    { scaleX : ScaleX
-    , scaleY : ScaleY
+    { scaleX : Editor.Scale.ScaleX
+    , scaleY : Editor.Scale.ScaleY
     , toMsg : Msg -> msg
     }
     -> Int
@@ -242,7 +203,7 @@ viewMetadataMeasure options index measure =
         width : Int
         width =
             Music.Duration.multiplyByInt
-                (cellSizeX options.scaleX * 8)
+                (Editor.Scale.cellSizeX options.scaleX * 8)
                 Music.Duration.eighth
                 |> Music.Duration.toFloat
                 |> Basics.round
@@ -258,13 +219,13 @@ viewMetadataMeasure options index measure =
 
 
 viewPianoRoll :
-    { scaleX : ScaleX
-    , scaleY : ScaleY
+    { scaleX : Editor.Scale.ScaleX
+    , scaleY : Editor.Scale.ScaleY
     , toMsg : Msg -> msg
     , measures : List Music.Measure
     , noteEvents : List (Event.Event Music.Note.Note)
     , newNoteValue : Music.Duration.Duration
-    , mousePosition : Maybe MusicCoordinate
+    , mousePosition : Maybe Editor.Coordinate.MusicCoordinate
     }
     -> Html msg
 viewPianoRoll options =
@@ -275,7 +236,7 @@ viewPianoRoll options =
                 [ Html.Attributes.class "piano-roll__piano"
                 ]
                 [ Editor.Piano.view
-                    (cellSizeY options.scaleY)
+                    (Editor.Scale.cellSizeY options.scaleY)
                     (UserClickedPianoKey >> options.toMsg)
                 ]
 
@@ -301,10 +262,13 @@ viewPianoRoll options =
                 [ Html.Attributes.class "piano-roll__content"
                 ]
                 (List.map
-                    (viewMeasure
+                    (Editor.Measure.viewMeasure
                         { scaleX = options.scaleX
                         , scaleY = options.scaleY
-                        , toMsg = options.toMsg
+                        , onMovedMouseOverGrid = UserMovedMouseOverGrid >> options.toMsg
+                        , onClickedLeftMouseButton = UserClickedLeftMouseButton >> options.toMsg
+                        , onClickedRightMouseButton = UserClickedRightMouseButton >> options.toMsg
+                        , onMovedMouseAway = UserMovedMouseAway |> options.toMsg
                         }
                     )
                     options.measures
@@ -325,33 +289,9 @@ viewPianoRoll options =
         ]
 
 
-viewMeasure :
-    { scaleX : ScaleX
-    , scaleY : ScaleY
-    , toMsg : Msg -> msg
-    }
-    -> Music.Measure
-    -> Html msg
-viewMeasure options measure =
-    Html.div
-        ([ Html.Attributes.class "piano-roll__measure"
-         , Html.Attributes.style "width" "calc(8 * 21px)"
-         , Html.Attributes.style "background-image"
-            (backgroundImageAttr
-                { width = cellSizeX options.scaleX
-                , height = cellSizeY options.scaleY
-                }
-            )
-         ]
-            ++ mouseEvents measure options.scaleX options.scaleY
-        )
-        []
-        |> Html.map options.toMsg
-
-
 viewNotes :
-    { scaleX : ScaleX
-    , scaleY : ScaleY
+    { scaleX : Editor.Scale.ScaleX
+    , scaleY : Editor.Scale.ScaleY
     , noteEvents : List (Event.Event Music.Note.Note)
     }
     -> Html msg
@@ -369,8 +309,8 @@ viewNotes options =
 
 
 viewNote :
-    { scaleX : ScaleX
-    , scaleY : ScaleY
+    { scaleX : Editor.Scale.ScaleX
+    , scaleY : Editor.Scale.ScaleY
     , color : String
     }
     -> Event.Event Music.Note.Note
@@ -378,8 +318,8 @@ viewNote :
 viewNote options noteEvent =
     let
         { x, y } =
-            MusicCoordinate noteEvent.at (Music.Note.pitch noteEvent.value)
-                |> fromMusicToPixels options.scaleX options.scaleY
+            Editor.Coordinate.MusicCoordinate noteEvent.at (Music.Note.pitch noteEvent.value)
+                |> Editor.Coordinate.fromMusicToPixels options.scaleX options.scaleY
 
         noteDuration : Music.Duration.Duration
         noteDuration =
@@ -388,14 +328,14 @@ viewNote options noteEvent =
         width : Int
         width =
             Music.Duration.multiplyByInt
-                (cellSizeX options.scaleX * 8)
+                (Editor.Scale.cellSizeX options.scaleX * 8)
                 noteDuration
                 |> Music.Duration.toFloat
                 |> Basics.round
 
         height : Int
         height =
-            cellSizeY options.scaleY
+            Editor.Scale.cellSizeY options.scaleY
     in
     Html.div
         [ Html.Attributes.class "note-preview"
@@ -411,156 +351,3 @@ viewNote options noteEvent =
             )
         ]
         []
-
-
-mouseEvents : Music.Measure -> ScaleX -> ScaleY -> List (Html.Attribute Msg)
-mouseEvents measure scaleX scaleY =
-    let
-        onMouseMove : Html.Attribute Msg
-        onMouseMove =
-            Html.Events.on "mousemove"
-                (offsetDecoder
-                    |> Json.Decode.map (fromPixelsToMusic measure scaleX scaleY)
-                    |> Json.Decode.map UserMovedMouseOverGrid
-                )
-
-        onMouseUp : Html.Attribute Msg
-        onMouseUp =
-            Html.Events.on "mouseup"
-                (Json.Decode.andThen
-                    (\mouseButton ->
-                        if mouseButton == 0 then
-                            offsetDecoder
-                                |> Json.Decode.map (fromPixelsToMusic measure scaleX scaleY)
-                                |> Json.Decode.map UserClickedLeftMouseButton
-
-                        else if mouseButton == 2 then
-                            offsetDecoder
-                                |> Json.Decode.map (fromPixelsToMusic measure scaleX scaleY)
-                                |> Json.Decode.map UserClickedRightMouseButton
-
-                        else
-                            Json.Decode.fail "bad witch club"
-                    )
-                    (Json.Decode.field "button" Json.Decode.int)
-                )
-
-        offsetDecoder : Json.Decode.Decoder PixelCoordinate
-        offsetDecoder =
-            Json.Decode.map2
-                PixelCoordinate
-                (Json.Decode.field "offsetX" Json.Decode.int)
-                (Json.Decode.field "offsetY" Json.Decode.int)
-    in
-    [ onMouseMove
-    , onMouseUp
-    , Html.Events.onMouseLeave UserMovedMouseAway
-    ]
-
-
-backgroundImageAttr : { height : Int, width : Int } -> String
-backgroundImageAttr options =
-    gridBackground
-        |> String.replace "$keys" (Editor.Key.view options.height)
-        |> String.replace "$verticalLines"
-            (List.range 0 4
-                |> List.map (viewVerticalLine options)
-                |> String.join ""
-            )
-        |> String.replace "$totalHeight" (String.fromInt (12 * options.height))
-        |> String.replace "$midSplit" (String.fromInt (7 * options.height))
-        |> String.replace "$verticalLineColor" "#fff2"
-        |> String.replace "$horizontalLineColor" "#fff1"
-        |> String.replace "$width" (String.fromInt options.width)
-        |> String.replace "\n" ""
-        |> String.replace "#" "%23"
-        |> wrapInUrl
-
-
-wrapInUrl : String -> String
-wrapInUrl input =
-    "url('data:image/svg+xml," ++ input ++ "')"
-
-
-viewVerticalLine : { height : Int, width : Int } -> Int -> String
-viewVerticalLine { width, height } index =
-    """<line x1="$x" y1="0" x2="$x" y2="$totalHeight" stroke="$verticalLineColor" />"""
-        |> String.replace "$x" (String.fromInt (width * index))
-        |> String.replace "$totalHeight" (String.fromInt (12 * height))
-
-
-gridBackground : String
-gridBackground =
-    """
-<svg class="piano-roll__bg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 $width $totalHeight" width="$width">
-  <g class="piano-roll__keys">
-    $keys
-  </g>
-  <g class="piano-roll__lines">
-    $verticalLines
-    <line x1="0" y1="0" x2="$width" y2="0" stroke="$horizontalLineColor" />
-    <line x1="0" y1="$midSplit" x2="$width" y2="$midSplit" stroke="$horizontalLineColor" />
-    <line x1="0" y1="$totalHeight" x2="$width" y2="$totalHeight" stroke="$horizontalLineColor" />
-  </g>
-</svg>
-    """
-
-
-
--- Coordinate conversions
-
-
-type alias PixelCoordinate =
-    { x : Int, y : Int }
-
-
-type alias MusicCoordinate =
-    { at : Music.Duration.Duration
-    , pitch : Music.Pitch.Pitch
-    }
-
-
-pixelsXToStart : ScaleX -> Int -> Music.Duration.Duration
-pixelsXToStart scaleX x =
-    Music.Duration.multiplyByInt (x // cellSizeX scaleX) Music.Duration.eighth
-
-
-startToPixelsX : ScaleX -> Music.Duration.Duration -> Int
-startToPixelsX scaleX duration =
-    Basics.round (Music.Duration.toFloat duration * 8) * cellSizeX scaleX
-
-
-pixelsYToPitch : ScaleY -> Int -> Music.Pitch.Pitch
-pixelsYToPitch scaleY y =
-    (131 - (y // cellSizeY scaleY))
-        |> Music.Pitch.fromMIDINoteNumber
-
-
-pitchToPixelsY : ScaleY -> Music.Pitch.Pitch -> Int
-pitchToPixelsY scaleY pitch =
-    (131 - Music.Pitch.toMIDINoteNumber pitch)
-        * cellSizeY scaleY
-
-
-fromPixelsToMusic : Music.Measure -> ScaleX -> ScaleY -> PixelCoordinate -> MusicCoordinate
-fromPixelsToMusic measure scaleX scaleY { x, y } =
-    let
-        xDuration : Music.Duration.Duration
-        xDuration =
-            Music.Duration.add measure.start (pixelsXToStart scaleX x)
-    in
-    MusicCoordinate xDuration (pixelsYToPitch scaleY y)
-
-
-fromMusicToPixels : ScaleX -> ScaleY -> MusicCoordinate -> PixelCoordinate
-fromMusicToPixels scaleX scaleY { at, pitch } =
-    { x = startToPixelsX scaleX at
-    , y = pitchToPixelsY scaleY pitch
-    }
-
-
-fromMusicToPitchEvent : MusicCoordinate -> PitchEvent
-fromMusicToPitchEvent { at, pitch } =
-    { at = at
-    , value = pitch
-    }
