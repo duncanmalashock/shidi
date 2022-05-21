@@ -1,4 +1,4 @@
-module Editor.Key exposing (Key, view)
+module Editor.Measure.Key exposing (Key, view)
 
 
 type Key

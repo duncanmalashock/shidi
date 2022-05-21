@@ -3,8 +3,8 @@ module Editor.Piano exposing (view)
 import Html exposing (Html)
 import Html.Attributes
 import Svg
-import Svg.Attributes as Attr
-import Svg.Events as Event
+import Svg.Attributes
+import Svg.Events
 
 
 view : Int -> (Int -> msg) -> Html msg
@@ -110,11 +110,11 @@ viewOctave { onNoteClicked, height } octave =
                         |> String.join "; "
             in
             Svg.text_
-                [ Attr.x <| String.fromInt (whiteKeyWidth - cKeyLabelRightOffset)
-                , Attr.y <| String.fromInt (octaveHeight - cKeyLabelBottomOffset)
-                , Attr.fill "black"
-                , Attr.class "piano__text"
-                , Attr.style styles
+                [ Svg.Attributes.x <| String.fromInt (whiteKeyWidth - cKeyLabelRightOffset)
+                , Svg.Attributes.y <| String.fromInt (octaveHeight - cKeyLabelBottomOffset)
+                , Svg.Attributes.fill "black"
+                , Svg.Attributes.class "piano__text"
+                , Svg.Attributes.style styles
                 ]
                 [ Svg.text <| "C" ++ String.fromInt octave_ ]
 
@@ -128,16 +128,16 @@ viewOctave { onNoteClicked, height } octave =
                         |> String.fromInt
             in
             Svg.rect
-                [ Attr.fill "#eee"
-                , Attr.x (String.fromInt -xOffset)
-                , Attr.y yValue
-                , Attr.width (String.fromInt (whiteKeyWidth + xOffset))
-                , Attr.height (String.fromInt whiteKeyHeight)
-                , Attr.stroke "#222"
-                , Attr.strokeWidth "1"
-                , Attr.rx (String.fromInt keyRoundedCorner)
-                , Attr.class "piano__key piano__key--white"
-                , Event.onClick onNoteClicked_
+                [ Svg.Attributes.fill "#eee"
+                , Svg.Attributes.x (String.fromInt -xOffset)
+                , Svg.Attributes.y yValue
+                , Svg.Attributes.width (String.fromInt (whiteKeyWidth + xOffset))
+                , Svg.Attributes.height (String.fromInt whiteKeyHeight)
+                , Svg.Attributes.stroke "#222"
+                , Svg.Attributes.strokeWidth "1"
+                , Svg.Attributes.rx (String.fromInt keyRoundedCorner)
+                , Svg.Attributes.class "piano__key piano__key--white"
+                , Svg.Events.onClick onNoteClicked_
                 ]
                 []
 
@@ -152,23 +152,23 @@ viewOctave { onNoteClicked, height } octave =
                         |> String.fromInt
             in
             Svg.rect
-                [ Attr.fill "#222"
-                , Attr.x (String.fromInt -xOffset)
-                , Attr.y yValue
-                , Attr.width (String.fromInt (blackKeyWidth + xOffset))
-                , Attr.height (String.fromInt blackKeyHeight)
-                , Attr.stroke "#222"
-                , Attr.strokeWidth "1"
-                , Attr.rx (String.fromInt keyRoundedCorner)
-                , Attr.class "piano__key piano__key--black"
-                , Event.onClick onNoteClicked_
+                [ Svg.Attributes.fill "#222"
+                , Svg.Attributes.x (String.fromInt -xOffset)
+                , Svg.Attributes.y yValue
+                , Svg.Attributes.width (String.fromInt (blackKeyWidth + xOffset))
+                , Svg.Attributes.height (String.fromInt blackKeyHeight)
+                , Svg.Attributes.stroke "#222"
+                , Svg.Attributes.strokeWidth "1"
+                , Svg.Attributes.rx (String.fromInt keyRoundedCorner)
+                , Svg.Attributes.class "piano__key piano__key--black"
+                , Svg.Events.onClick onNoteClicked_
                 ]
                 []
     in
     Svg.svg
-        [ Attr.viewBox viewBoxAttr
-        , Attr.width (String.fromInt whiteKeyWidth)
-        , Attr.style "display: block"
+        [ Svg.Attributes.viewBox viewBoxAttr
+        , Svg.Attributes.width (String.fromInt whiteKeyWidth)
+        , Svg.Attributes.style "display: block"
         ]
         [ Svg.g []
             ([ 11, 9, 7, 5, 4, 2, 0 ]

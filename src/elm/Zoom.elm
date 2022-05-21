@@ -7,7 +7,7 @@ module Zoom exposing
     , viewY
     )
 
-import Html
+import Html exposing (Html)
 import Html.Attributes exposing (value)
 import Html.Events
 
@@ -36,17 +36,17 @@ type Axis
     | Y
 
 
-viewX : (Zoom -> msg) -> Zoom -> Html.Html msg
+viewX : (Zoom -> msg) -> Zoom -> Html msg
 viewX toMsg zoom =
     viewHelp X toMsg zoom
 
 
-viewY : (Zoom -> msg) -> Zoom -> Html.Html msg
+viewY : (Zoom -> msg) -> Zoom -> Html msg
 viewY toMsg zoom =
     viewHelp Y toMsg zoom
 
 
-viewHelp : Axis -> (Zoom -> msg) -> Zoom -> Html.Html msg
+viewHelp : Axis -> (Zoom -> msg) -> Zoom -> Html msg
 viewHelp axis toMsg ((Zoom { x, y }) as zoom) =
     let
         { value, updateMsg, min, max, step } =
