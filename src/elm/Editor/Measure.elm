@@ -161,7 +161,10 @@ viewVerticalLine { width, height, divisions } index =
 
         position : Int
         position =
-            if positionBeforeOffset == 0 then
+            if index == 0 then
+                -- Because SVG line thickness is centered on the stroke, nudge
+                -- by one pixel at the boundary to avoid half of the first
+                -- vertical line from being clipped off.
                 1
 
             else
