@@ -19,6 +19,7 @@ import Ports
 import Project
 import Task
 import Ui.Button
+import Zoom
 
 
 main : Program () Model Msg
@@ -36,6 +37,7 @@ type alias Model =
     , fileName : String
     , showSaveModal : Bool
     , editor : Editor.Model
+    , zoom : Zoom.Zoom
     , newNoteDuration : Music.Duration.Duration
     , errorMessage : Maybe String
     }
@@ -54,6 +56,7 @@ initialModel =
     , fileName = ""
     , showSaveModal = False
     , editor = Editor.init
+    , zoom = Zoom.new
     , newNoteDuration = Music.Duration.whole
     , errorMessage = Nothing
     }
@@ -80,6 +83,8 @@ type
     | UserClickedNoteValueButton Music.Duration.Duration
       -- Setting tempo
     | UserTypedIntoTempoField String
+      -- Zoom controls
+    | UserChangedZoomControl Zoom.Zoom
       -- Toast
     | UserClickedToastDismissButton
 
@@ -213,6 +218,11 @@ update msg model =
             , Cmd.none
             )
 
+        UserChangedZoomControl zoom ->
+            ( { model | zoom = zoom }
+            , Cmd.none
+            )
+
 
 view : Model -> { title : String, body : List (Html Msg) }
 view model =
@@ -242,6 +252,7 @@ viewAppFrame model =
                 [ Editor.view
                     { project = model.project
                     , model = model.editor
+                    , zoom = model.zoom
                     , toMsg = ClientReceivedEditorMsg
                     , newNoteValue = model.newNoteDuration
                     }
@@ -257,12 +268,24 @@ viewAppFrame model =
 viewControls : Model -> Html Msg
 viewControls model =
     Html.div
-        [ Html.Attributes.class "controls" ]
+        [ Html.Attributes.class "controls"
+        ]
         [ viewPlayButton
         , viewSaveButton
         , viewLoadButton
         , viewNoteValueButtons
         , viewTempoField (Project.tempo model.project)
+        , viewZoomControls model.zoom
+        ]
+
+
+viewZoomControls : Zoom.Zoom -> Html Msg
+viewZoomControls zoom =
+    Html.div
+        [ Html.Attributes.class "zoom-controls"
+        ]
+        [ Zoom.viewX UserChangedZoomControl zoom
+        , Zoom.viewY UserChangedZoomControl zoom
         ]
 
 

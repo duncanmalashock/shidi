@@ -23,17 +23,18 @@ list =
     ]
 
 
-view : Int -> String
-view height =
-    List.indexedMap (viewKey height) list
+view : Int -> Int -> String
+view width height =
+    List.indexedMap (viewKey width height) list
         |> String.join ""
 
 
-viewKey : Int -> Int -> Key -> String
-viewKey height index key =
-    """<rect x="0" y="$y" width="100" height="$height" fill="$fill"></rect>"""
+viewKey : Int -> Int -> Int -> Key -> String
+viewKey width height index key =
+    """<rect x="0" y="$y" width="$width" height="$height" fill="$fill"></rect>"""
         |> String.replace "$y" (String.fromInt (height * index))
         |> String.replace "$height" (String.fromInt height)
+        |> String.replace "$width" (String.fromInt width)
         |> String.replace "$fill" (toFillColor key)
 
 

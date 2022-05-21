@@ -17,7 +17,6 @@ module Editor exposing
 import Editor.Coordinate
 import Editor.Measure
 import Editor.Piano
-import Editor.Zoom
 import Html exposing (Html)
 import Html.Attributes
 import Music
@@ -26,12 +25,12 @@ import Music.Event as Event
 import Music.Note
 import Music.Pitch
 import Project
+import Zoom
 
 
 type Model
     = Model
         { mousePosition : Maybe Editor.Coordinate.Music
-        , zoom : Editor.Zoom.Zoom
         }
 
 
@@ -39,7 +38,6 @@ init : Model
 init =
     Model
         { mousePosition = Nothing
-        , zoom = Editor.Zoom.new
         }
 
 
@@ -122,6 +120,7 @@ update msg (Model model) =
 view :
     { project : Project.Project
     , model : Model
+    , zoom : Zoom.Zoom
     , toMsg : Msg -> msg
     , newNoteValue : Music.Duration.Duration
     }
@@ -135,12 +134,12 @@ view options =
         [ Html.Attributes.class "editor"
         ]
         [ viewMetadata
-            { zoom = model.zoom
+            { zoom = options.zoom
             , toMsg = options.toMsg
             , measures = Project.measures options.project
             }
         , viewPianoRoll
-            { zoom = model.zoom
+            { zoom = options.zoom
             , toMsg = options.toMsg
             , measures = Project.measures options.project
             , noteEvents = Project.noteEvents options.project
@@ -151,7 +150,7 @@ view options =
 
 
 viewMetadata :
-    { zoom : Editor.Zoom.Zoom
+    { zoom : Zoom.Zoom
     , toMsg : Msg -> msg
     , measures : List Music.Measure
     }
@@ -189,7 +188,7 @@ viewMetadata options =
 
 
 viewMetadataMeasure :
-    { zoom : Editor.Zoom.Zoom
+    { zoom : Zoom.Zoom
     , toMsg : Msg -> msg
     }
     -> Int
@@ -200,7 +199,7 @@ viewMetadataMeasure options index measure =
         width : Int
         width =
             Music.Duration.multiplyByInt
-                (Editor.Zoom.cellSizeX options.zoom * 8)
+                (Zoom.cellSizeX options.zoom * 8)
                 Music.Duration.eighth
                 |> Music.Duration.toFloat
                 |> Basics.round
@@ -216,7 +215,7 @@ viewMetadataMeasure options index measure =
 
 
 viewPianoRoll :
-    { zoom : Editor.Zoom.Zoom
+    { zoom : Zoom.Zoom
     , toMsg : Msg -> msg
     , measures : List Music.Measure
     , noteEvents : List (Event.Event Music.Note.Note)
@@ -232,7 +231,7 @@ viewPianoRoll options =
                 [ Html.Attributes.class "piano-roll__piano"
                 ]
                 [ Editor.Piano.view
-                    (Editor.Zoom.cellSizeY options.zoom)
+                    (Zoom.cellSizeY options.zoom)
                     (UserClickedPianoKey >> options.toMsg)
                 ]
 
@@ -283,7 +282,7 @@ viewPianoRoll options =
 
 
 viewNotes :
-    { zoom : Editor.Zoom.Zoom
+    { zoom : Zoom.Zoom
     , noteEvents : List (Event.Event Music.Note.Note)
     }
     -> Html msg
@@ -300,7 +299,7 @@ viewNotes options =
 
 
 viewNote :
-    { zoom : Editor.Zoom.Zoom
+    { zoom : Zoom.Zoom
     , color : String
     }
     -> Event.Event Music.Note.Note
@@ -318,14 +317,14 @@ viewNote options noteEvent =
         width : Int
         width =
             Music.Duration.multiplyByInt
-                (Editor.Zoom.cellSizeX options.zoom * 8)
+                (Zoom.cellSizeX options.zoom * 8)
                 noteDuration
                 |> Music.Duration.toFloat
                 |> Basics.round
 
         height : Int
         height =
-            Editor.Zoom.cellSizeY options.zoom
+            Zoom.cellSizeY options.zoom
     in
     Html.div
         [ Html.Attributes.class "note-preview"

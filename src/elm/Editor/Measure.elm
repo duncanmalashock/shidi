@@ -2,16 +2,17 @@ module Editor.Measure exposing (view)
 
 import Editor.Coordinate
 import Editor.Key
-import Editor.Zoom
 import Html exposing (Html)
 import Html.Attributes
 import Html.Events
 import Json.Decode
 import Music
+import Music.Meter
+import Zoom
 
 
 view :
-    { zoom : Editor.Zoom.Zoom
+    { zoom : Zoom.Zoom
     , onMovedMouseOverGrid : Editor.Coordinate.Music -> msg
     , onClickedLeftMouseButton : Editor.Coordinate.Music -> msg
     , onClickedRightMouseButton : Editor.Coordinate.Music -> msg
@@ -20,15 +21,34 @@ view :
     -> Music.Measure
     -> Html msg
 view options measure =
+    let
+        beatsPerMeasure : Int
+        beatsPerMeasure =
+            Music.Meter.beatsPerMeasure measure.meter
+
+        cellsPerBeat : Int
+        cellsPerBeat =
+            2
+
+        divisions : Int
+        divisions =
+            beatsPerMeasure * cellsPerBeat
+
+        width : Int
+        width =
+            Zoom.cellSizeX options.zoom * divisions
+    in
     Html.div
         ([ Html.Attributes.class "piano-roll__measure"
-         , Html.Attributes.style "width" "calc(8 * 21px)"
+         , Html.Attributes.style "width" (String.fromInt width ++ "px")
          , Html.Attributes.style "background-image"
             (backgroundImageAttr
-                { width = Editor.Zoom.cellSizeX options.zoom
-                , height = Editor.Zoom.cellSizeY options.zoom
+                { width = width
+                , height = Zoom.cellSizeY options.zoom
+                , divisions = divisions
                 }
             )
+         , Html.Attributes.style "background-repeat" "repeat-y"
          ]
             ++ mouseEvents
                 { onMovedMouseOverGrid = options.onMovedMouseOverGrid
@@ -47,7 +67,7 @@ mouseEvents :
     , onClickedLeftMouseButton : Editor.Coordinate.Music -> msg
     , onClickedRightMouseButton : Editor.Coordinate.Music -> msg
     , onMovedMouseAway : msg
-    , zoom : Editor.Zoom.Zoom
+    , zoom : Zoom.Zoom
     , measure : Music.Measure
     }
     -> List (Html.Attribute msg)
@@ -107,12 +127,12 @@ mouseEvents options =
     ]
 
 
-backgroundImageAttr : { height : Int, width : Int } -> String
+backgroundImageAttr : { height : Int, width : Int, divisions : Int } -> String
 backgroundImageAttr options =
     gridBackground
-        |> String.replace "$keys" (Editor.Key.view options.height)
+        |> String.replace "$keys" (Editor.Key.view options.width options.height)
         |> String.replace "$verticalLines"
-            (List.range 0 4
+            (List.range 0 options.divisions
                 |> List.map (viewVerticalLine options)
                 |> String.join ""
             )
@@ -131,10 +151,16 @@ wrapInUrl input =
     "url('data:image/svg+xml," ++ input ++ "')"
 
 
-viewVerticalLine : { height : Int, width : Int } -> Int -> String
-viewVerticalLine { width, height } index =
+viewVerticalLine : { height : Int, width : Int, divisions : Int } -> Int -> String
+viewVerticalLine { width, height, divisions } index =
+    let
+        position =
+            (toFloat width / toFloat divisions)
+                * toFloat index
+                |> round
+    in
     """<line x1="$x" y1="0" x2="$x" y2="$totalHeight" stroke="$verticalLineColor" />"""
-        |> String.replace "$x" (String.fromInt (width * index))
+        |> String.replace "$x" (String.fromInt position)
         |> String.replace "$totalHeight" (String.fromInt (12 * height))
 
 
