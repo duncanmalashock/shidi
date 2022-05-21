@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   width: fit-content;
+  min-width: 100%;
 }
 
 .metadata {
@@ -11,6 +12,7 @@
   position: sticky;
   top: 0;
   z-index: 2;
+  min-width: 100%;
 }
 
 .metadata__shim {
@@ -34,6 +36,8 @@
   display: flex;
   flex-direction: row;
   flex: 1 1 auto;
+  min-width: 100%;
+  background-color: #191921;
 }
 
 .piano-roll__piano {
