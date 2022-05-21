@@ -54,8 +54,8 @@ viewHelp axis toMsg ((Zoom { x, y }) as zoom) =
                 X ->
                     { value = x
                     , updateMsg = UserChangedZoomXInput
-                    , min = 10
-                    , max = 120
+                    , min = 8
+                    , max = 128
                     , step = 5
                     }
 
