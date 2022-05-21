@@ -3,24 +3,40 @@
 @import "modal";
 @import "toast";
 
+html, body {
+    width: 100%;
+    height: 100%;
+}
+
 body {
     margin: 0;
 }
 
-#app {
-    background: #444;
+.app-frame {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    height: 100%;
+}
+
+.app-frame__header {
+    flex: 0 0 auto;
+}
+
+.app-frame__content {
+    flex: 1 1 auto;
+    overflow: auto;
 }
 
 /* Controls */
 
 .controls {
-    position: fixed;
-    top: 2rem;
-    right: 2rem;
     display: flex;
-    flex-direction: column;
-    align-items: end;
-    gap: 0.5rem;
+    flex-direction: row;
+    gap: 1rem;
+    background: #191921;
+    padding: 1rem;
 }
 
 .tempo-field {

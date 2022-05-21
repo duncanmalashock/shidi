@@ -212,17 +212,40 @@ view : Model -> { title : String, body : List (Html Msg) }
 view model =
     { title = "shidi"
     , body =
-        [ Editor.view
-            { project = model.project
-            , model = model.editor
-            , toMsg = ClientReceivedEditorMsg
-            , newNoteValue = model.newNoteDuration
-            }
-        , viewControls model
-        , viewFileSaveModal model
+        [ viewFileSaveModal model
+        , viewAppFrame model
         , viewToast model
         ]
     }
+
+
+viewAppFrame : Model -> Html Msg
+viewAppFrame model =
+    let
+        viewHeader : Html Msg
+        viewHeader =
+            Html.div
+                [ Html.Attributes.class "app-frame__header" ]
+                [ viewControls model
+                ]
+
+        viewContent : Html Msg
+        viewContent =
+            Html.div
+                [ Html.Attributes.class "app-frame__content" ]
+                [ Editor.view
+                    { project = model.project
+                    , model = model.editor
+                    , toMsg = ClientReceivedEditorMsg
+                    , newNoteValue = model.newNoteDuration
+                    }
+                ]
+    in
+    Html.div
+        [ Html.Attributes.class "app-frame" ]
+        [ viewHeader
+        , viewContent
+        ]
 
 
 viewControls : Model -> Html Msg
