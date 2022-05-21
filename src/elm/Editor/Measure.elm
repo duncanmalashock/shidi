@@ -132,13 +132,12 @@ backgroundImageAttr options =
     gridBackground
         |> String.replace "$keys" (Editor.Key.view options.width options.height)
         |> String.replace "$verticalLines"
-            (List.range 0 options.divisions
+            (List.range 0 (options.divisions - 1)
                 |> List.map (viewVerticalLine options)
                 |> String.join ""
             )
         |> String.replace "$totalHeight" (String.fromInt (12 * options.height))
         |> String.replace "$midSplit" (String.fromInt (7 * options.height))
-        |> String.replace "$verticalLineColor" "#fff2"
         |> String.replace "$horizontalLineColor" "#fff1"
         |> String.replace "$width" (String.fromInt options.width)
         |> String.replace "\n" ""
@@ -154,14 +153,33 @@ wrapInUrl input =
 viewVerticalLine : { height : Int, width : Int, divisions : Int } -> Int -> String
 viewVerticalLine { width, height, divisions } index =
     let
-        position =
+        positionBeforeOffset : Int
+        positionBeforeOffset =
             (toFloat width / toFloat divisions)
                 * toFloat index
                 |> round
+
+        position : Int
+        position =
+            if positionBeforeOffset == 0 then
+                1
+
+            else
+                positionBeforeOffset
+
+        color : String
+        color =
+            case index of
+                0 ->
+                    "#fff4"
+
+                _ ->
+                    "#fff2"
     in
     """<line x1="$x" y1="0" x2="$x" y2="$totalHeight" stroke="$verticalLineColor" />"""
         |> String.replace "$x" (String.fromInt position)
         |> String.replace "$totalHeight" (String.fromInt (12 * height))
+        |> String.replace "$verticalLineColor" color
 
 
 gridBackground : String
