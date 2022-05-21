@@ -18,7 +18,7 @@ type Zoom
 
 new : Zoom
 new =
-    Zoom { x = 21, y = 21 }
+    Zoom { x = 30, y = 21 }
 
 
 cellSizeX : Zoom -> Int

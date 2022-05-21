@@ -57,7 +57,7 @@ initialModel =
     , showSaveModal = False
     , editor = Editor.init
     , zoom = Zoom.new
-    , newNoteDuration = Music.Duration.whole
+    , newNoteDuration = Music.Duration.eighth
     , errorMessage = Nothing
     }
 
