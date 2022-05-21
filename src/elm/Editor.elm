@@ -198,12 +198,7 @@ viewMetadataMeasure options index measure =
     let
         width : Int
         width =
-            Music.Duration.multiplyByInt
-                (Zoom.cellSizeX options.zoom * 8)
-                Music.Duration.eighth
-                |> Music.Duration.toFloat
-                |> Basics.round
-                |> (*) 8
+            Editor.Measure.widthInPixels measure options.zoom
     in
     Html.div
         [ Html.Attributes.class "metadata__measure"

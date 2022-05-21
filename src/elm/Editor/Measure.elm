@@ -1,4 +1,4 @@
-module Editor.Measure exposing (view)
+module Editor.Measure exposing (view, widthInPixels)
 
 import Editor.Coordinate
 import Editor.Measure.Background
@@ -9,6 +9,25 @@ import Json.Decode
 import Music
 import Music.Meter
 import Zoom
+
+
+widthInPixels : Music.Measure -> Zoom.Zoom -> Int
+widthInPixels measure zoom =
+    Zoom.cellSizeX zoom * divisions measure zoom
+
+
+divisions : Music.Measure -> Zoom.Zoom -> Int
+divisions measure zoom =
+    let
+        beatsPerMeasure : Int
+        beatsPerMeasure =
+            Music.Meter.beatsPerMeasure measure.meter
+
+        cellsPerBeat : Int
+        cellsPerBeat =
+            2
+    in
+    beatsPerMeasure * cellsPerBeat
 
 
 view :
@@ -22,29 +41,17 @@ view :
     -> Html msg
 view options measure =
     let
-        beatsPerMeasure : Int
-        beatsPerMeasure =
-            Music.Meter.beatsPerMeasure measure.meter
-
-        cellsPerBeat : Int
-        cellsPerBeat =
-            2
-
-        divisions : Int
-        divisions =
-            beatsPerMeasure * cellsPerBeat
-
-        width : Int
         width =
-            Zoom.cellSizeX options.zoom * divisions
+            widthInPixels measure options.zoom
     in
     Html.div
         ([ Html.Attributes.class "piano-roll__measure"
-         , Html.Attributes.style "width" (String.fromInt width ++ "px")
+         , Html.Attributes.style "width"
+            (String.fromInt width ++ "px")
          , Editor.Measure.Background.attribute
             { width = width
             , height = Zoom.cellSizeY options.zoom
-            , divisions = divisions
+            , divisions = divisions measure options.zoom
             , zoom = options.zoom
             }
          , Html.Attributes.style "background-repeat" "repeat-y"

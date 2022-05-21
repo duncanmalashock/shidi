@@ -18,7 +18,7 @@ type Zoom
 
 new : Zoom
 new =
-    Zoom { x = 30, y = 21 }
+    Zoom { x = 43, y = 21 }
 
 
 cellSizeX : Zoom -> Int
@@ -54,16 +54,16 @@ viewHelp axis toMsg ((Zoom { x, y }) as zoom) =
                 X ->
                     { value = x
                     , updateMsg = UserChangedZoomXInput
-                    , min = 8
-                    , max = 128
+                    , min = 13
+                    , max = 73
                     , step = 5
                     }
 
                 Y ->
                     { value = y
                     , updateMsg = UserChangedZoomYInput
-                    , min = 14
-                    , max = 56
+                    , min = 7
+                    , max = 35
                     , step = 7
                     }
     in

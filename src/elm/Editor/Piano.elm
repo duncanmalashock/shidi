@@ -81,7 +81,11 @@ viewOctave { onNoteClicked, height } octave =
 
         fontSize : Int
         fontSize =
-            11
+            if whiteKeyHeight >= 14 then
+                11
+
+            else
+                9
 
         viewBoxAttr : String
         viewBoxAttr =
