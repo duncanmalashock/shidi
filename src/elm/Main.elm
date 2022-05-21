@@ -68,6 +68,7 @@ type
       -- Saving to file
     | UserClickedSaveButton
     | UserClickedModalSaveButton
+    | UserSubmittedSaveForm
     | ClientFocusedOnFileNameField (Result Browser.Dom.Error ())
     | UserTypedIntoNameField String
     | UserDismissedSaveModal
@@ -168,6 +169,11 @@ update msg model =
                     ( { model | errorMessage = Just "Invalid file format" }, Cmd.none )
 
         UserClickedModalSaveButton ->
+            ( model
+            , Cmd.none
+            )
+
+        UserSubmittedSaveForm ->
             ( { model | showSaveModal = False }
             , File.Save.save model.fileName model.project
             )
@@ -290,7 +296,7 @@ viewFileSaveModal model =
                 []
             , Html.form
                 [ Html.Attributes.class "modal"
-                , Html.Events.onSubmit UserClickedModalSaveButton
+                , Html.Events.onSubmit UserSubmittedSaveForm
                 ]
                 [ Html.input
                     [ Html.Attributes.type_ "text"
