@@ -172,12 +172,14 @@ viewVerticalLine { width, height, divisions } index =
 
         color : String
         color =
-            case index of
-                0 ->
-                    "#fff4"
+            if index == 0 then
+                "#ffffff4A"
 
-                _ ->
-                    "#fff2"
+            else if modBy 2 index == 0 then
+                "#ffffff30"
+
+            else
+                "#ffffff20"
     in
     """<line x1="$x" y1="0" x2="$x" y2="$totalHeight" stroke="$verticalLineColor" />"""
         |> String.replace "$x" (String.fromInt position)
