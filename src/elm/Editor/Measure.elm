@@ -7,25 +7,36 @@ import Html.Attributes
 import Html.Events
 import Json.Decode
 import Music
+import Music.Duration
 import Music.Meter
 import Zoom
 
 
 widthInPixels : Music.Measure -> Zoom.Zoom -> Int
 widthInPixels measure zoom =
-    Zoom.cellSizeX zoom * divisions measure zoom
+    Zoom.cellSizeX zoom * divisions measure
 
 
-divisions : Music.Measure -> Zoom.Zoom -> Int
-divisions measure zoom =
+divisions : Music.Measure -> Int
+divisions measure =
     let
         beatsPerMeasure : Int
         beatsPerMeasure =
             Music.Meter.beatsPerMeasure measure.meter
 
+        beatDuration : Music.Duration.Duration
+        beatDuration =
+            Music.Meter.beatDuration measure.meter
+
+        cellDuration : Music.Duration.Duration
+        cellDuration =
+            Music.Duration.eighth
+
         cellsPerBeat : Int
         cellsPerBeat =
-            2
+            Music.Duration.divide beatDuration cellDuration
+                |> Music.Duration.toFloat
+                |> round
     in
     beatsPerMeasure * cellsPerBeat
 
@@ -51,7 +62,7 @@ view options measure =
          , Editor.Measure.Background.attribute
             { width = width
             , height = Zoom.cellSizeY options.zoom
-            , divisions = divisions measure options.zoom
+            , divisions = divisions measure
             , zoom = options.zoom
             }
          , Html.Attributes.style "background-repeat" "repeat-y"

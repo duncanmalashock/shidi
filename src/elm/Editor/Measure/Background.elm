@@ -67,9 +67,6 @@ viewVerticalLine { width, height, divisions } index =
             if index == 0 then
                 "#ffffff40"
 
-            else if modBy 2 index == 0 then
-                "#ffffff30"
-
             else
                 "#ffffff18"
     in
