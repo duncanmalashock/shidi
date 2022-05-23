@@ -1,5 +1,6 @@
 module Editor.Measure.Background exposing (attribute)
 
+import Editor.Measure.GridLine
 import Editor.Measure.Key
 import Html
 import Html.Attributes
@@ -7,25 +8,45 @@ import Zoom
 
 
 attribute :
-    { height : Int, width : Int, divisions : Int, zoom : Zoom.Zoom }
+    { height : Int
+    , width : Int
+    , gridLines : List Editor.Measure.GridLine.GridLine
+    , zoom : Zoom.Zoom
+    }
     -> Html.Attribute msg
 attribute options =
     Html.Attributes.style "background-image"
         (backgroundImageAttr
             { width = options.width
             , height = Zoom.cellSizeY options.zoom
-            , divisions = options.divisions
+            , gridLines = options.gridLines
             }
         )
 
 
-backgroundImageAttr : { height : Int, width : Int, divisions : Int } -> String
+backgroundImageAttr :
+    { height : Int
+    , width : Int
+    , gridLines : List Editor.Measure.GridLine.GridLine
+    }
+    -> String
 backgroundImageAttr options =
+    let
+        gridLinesTotal : Int
+        gridLinesTotal =
+            List.length options.gridLines
+    in
     gridBackground
         |> String.replace "$keys" (Editor.Measure.Key.view options.width options.height)
         |> String.replace "$verticalLines"
-            (List.range 0 (options.divisions - 1)
-                |> List.map (viewVerticalLine options)
+            (options.gridLines
+                |> List.indexedMap
+                    (viewVerticalLine
+                        { height = options.height
+                        , width = options.width
+                        , gridLinesTotal = gridLinesTotal
+                        }
+                    )
                 |> String.join ""
             )
         |> String.replace "$totalHeight" (String.fromInt (12 * options.height))
@@ -42,15 +63,13 @@ wrapInUrl input =
     "url('data:image/svg+xml," ++ input ++ "')"
 
 
-viewVerticalLine : { height : Int, width : Int, divisions : Int } -> Int -> String
-viewVerticalLine { width, height, divisions } index =
+viewVerticalLine :
+    { height : Int, width : Int, gridLinesTotal : Int }
+    -> Int
+    -> Editor.Measure.GridLine.GridLine
+    -> String
+viewVerticalLine { width, height, gridLinesTotal } index gridLine =
     let
-        positionBeforeOffset : Int
-        positionBeforeOffset =
-            (toFloat width / toFloat divisions)
-                * toFloat index
-                |> round
-
         position : Int
         position =
             if index == 0 then
@@ -60,15 +79,13 @@ viewVerticalLine { width, height, divisions } index =
                 1
 
             else
-                positionBeforeOffset
+                (toFloat width / toFloat gridLinesTotal)
+                    * toFloat index
+                    |> round
 
         color : String
         color =
-            if index == 0 then
-                "#ffffff40"
-
-            else
-                "#ffffff18"
+            Editor.Measure.GridLine.toColor gridLine
     in
     """<line x1="$x" y1="0" x2="$x" y2="$totalHeight" stroke="$verticalLineColor" />"""
         |> String.replace "$x" (String.fromInt position)

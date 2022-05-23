@@ -73,11 +73,19 @@ viewOctave { onNoteClicked, height } octave =
 
         cKeyLabelRightOffset : Int
         cKeyLabelRightOffset =
-            17
+            if whiteKeyHeight >= 14 then
+                17
+
+            else
+                16
 
         cKeyLabelBottomOffset : Int
         cKeyLabelBottomOffset =
-            ((height + 6) - fontSize) // 2
+            if whiteKeyHeight >= 14 then
+                ((height + 6) - fontSize) // 2
+
+            else
+                ((height + 6) - fontSize + 2) // 2
 
         fontSize : Int
         fontSize =
@@ -85,7 +93,7 @@ viewOctave { onNoteClicked, height } octave =
                 11
 
             else
-                9
+                10
 
         viewBoxAttr : String
         viewBoxAttr =

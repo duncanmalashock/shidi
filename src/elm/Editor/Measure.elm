@@ -2,10 +2,12 @@ module Editor.Measure exposing (view, widthInPixels)
 
 import Editor.Coordinate
 import Editor.Measure.Background
+import Editor.Measure.GridLine
 import Html exposing (Html)
 import Html.Attributes
 import Html.Events
 import Json.Decode
+import List.Extra
 import Music
 import Music.Duration
 import Music.Meter
@@ -14,31 +16,174 @@ import Zoom
 
 widthInPixels : Music.Measure -> Zoom.Zoom -> Int
 widthInPixels measure zoom =
-    Zoom.cellSizeX zoom * divisions measure
+    Zoom.cellSizeX zoom * eighthNotesInMeasure measure.meter
 
 
-divisions : Music.Measure -> Int
-divisions measure =
+eighthNotesInMeasure : Music.Meter.Meter -> Int
+eighthNotesInMeasure meter =
+    subdivisionsInMeasure Music.Duration.eighth meter
+
+
+sixteenthNotesInMeasure : Music.Meter.Meter -> Int
+sixteenthNotesInMeasure meter =
+    subdivisionsInMeasure Music.Duration.sixteenth meter
+
+
+subdivisionsInMeasure : Music.Duration.Duration -> Music.Meter.Meter -> Int
+subdivisionsInMeasure divideBy meter =
     let
         beatsPerMeasure : Int
         beatsPerMeasure =
-            Music.Meter.beatsPerMeasure measure.meter
+            Music.Meter.beatsPerMeasure meter
 
         beatDuration : Music.Duration.Duration
         beatDuration =
-            Music.Meter.beatDuration measure.meter
-
-        cellDuration : Music.Duration.Duration
-        cellDuration =
-            Music.Duration.eighth
-
-        cellsPerBeat : Int
-        cellsPerBeat =
-            Music.Duration.divide beatDuration cellDuration
-                |> Music.Duration.toFloat
-                |> round
+            Music.Meter.beatDuration meter
     in
-    beatsPerMeasure * cellsPerBeat
+    Music.Duration.divide beatDuration divideBy
+        |> Music.Duration.toFloat
+        |> round
+        |> (*) beatsPerMeasure
+
+
+type LineGrouping
+    = GroupedByQuarters
+    | GroupedByThreeEighths
+
+
+lineGrouping : Music.Meter.Meter -> Maybe LineGrouping
+lineGrouping meter =
+    let
+        beatsPerMeasure : Int
+        beatsPerMeasure =
+            Music.Meter.beatsPerMeasure meter
+
+        beatDuration : Music.Duration.Duration
+        beatDuration =
+            Music.Meter.beatDuration meter
+    in
+    if
+        (beatDuration == Music.Duration.quarter)
+            || (beatDuration == Music.Duration.half)
+    then
+        Just GroupedByQuarters
+
+    else if beatDuration == Music.Duration.eighth then
+        if modBy 3 beatsPerMeasure == 0 then
+            Just GroupedByThreeEighths
+
+        else
+            Nothing
+
+    else
+        Nothing
+
+
+primaryGridLinesIndicesInEights : Music.Meter.Meter -> List Int
+primaryGridLinesIndicesInEights meter =
+    let
+        indices : List Int
+        indices =
+            List.repeat (eighthNotesInMeasure meter) 0
+                |> List.indexedMap (\i _ -> i)
+    in
+    case lineGrouping meter of
+        Just GroupedByQuarters ->
+            indices
+                |> List.filter (\i -> modBy 2 i == 0)
+
+        Just GroupedByThreeEighths ->
+            indices
+                |> List.filter (\i -> modBy 3 i == 0)
+
+        Nothing ->
+            []
+
+
+gridLines :
+    Zoom.Zoom
+    -> Music.Meter.Meter
+    -> List Editor.Measure.GridLine.GridLine
+gridLines zoom meter =
+    let
+        showSixteenths : Bool
+        showSixteenths =
+            Zoom.cellSizeX zoom >= 58
+
+        linesBeforeReplacement : List Editor.Measure.GridLine.GridLine
+        linesBeforeReplacement =
+            if showSixteenths then
+                Editor.Measure.GridLine.tertiary
+                    |> List.repeat (sixteenthNotesInMeasure meter)
+
+            else
+                Editor.Measure.GridLine.secondary
+                    |> List.repeat (eighthNotesInMeasure meter)
+
+        setInitial :
+            List Editor.Measure.GridLine.GridLine
+            -> List Editor.Measure.GridLine.GridLine
+        setInitial list =
+            updateGridLinesAtIndices
+                [ 0 ]
+                Editor.Measure.GridLine.initial
+                list
+
+        setSecondaries :
+            List Editor.Measure.GridLine.GridLine
+            -> List Editor.Measure.GridLine.GridLine
+        setSecondaries list =
+            let
+                indices : List Int
+                indices =
+                    if showSixteenths then
+                        List.repeat (eighthNotesInMeasure meter) 0
+                            |> List.indexedMap (\i _ -> i * 2)
+
+                    else
+                        List.repeat (eighthNotesInMeasure meter) 0
+                            |> List.indexedMap (\i _ -> i)
+            in
+            updateGridLinesAtIndices
+                indices
+                Editor.Measure.GridLine.secondary
+                list
+
+        setPrimaries :
+            List Editor.Measure.GridLine.GridLine
+            -> List Editor.Measure.GridLine.GridLine
+        setPrimaries list =
+            let
+                indices : List Int
+                indices =
+                    if showSixteenths then
+                        primaryGridLinesIndicesInEights meter
+                            |> List.map (\n -> n * 2)
+
+                    else
+                        primaryGridLinesIndicesInEights meter
+            in
+            updateGridLinesAtIndices
+                indices
+                Editor.Measure.GridLine.primary
+                list
+    in
+    linesBeforeReplacement
+        |> setSecondaries
+        |> setPrimaries
+        |> setInitial
+
+
+updateGridLinesAtIndices :
+    List Int
+    -> Editor.Measure.GridLine.GridLine
+    -> List Editor.Measure.GridLine.GridLine
+    -> List Editor.Measure.GridLine.GridLine
+updateGridLinesAtIndices indices gridLineType list =
+    List.foldl
+        (\index -> List.Extra.updateAt index (always gridLineType))
+        list
+        indices
 
 
 view :
@@ -52,6 +197,7 @@ view :
     -> Html msg
 view options measure =
     let
+        width : Int
         width =
             widthInPixels measure options.zoom
     in
@@ -62,7 +208,7 @@ view options measure =
          , Editor.Measure.Background.attribute
             { width = width
             , height = Zoom.cellSizeY options.zoom
-            , divisions = divisions measure
+            , gridLines = gridLines options.zoom measure.meter
             , zoom = options.zoom
             }
          , Html.Attributes.style "background-repeat" "repeat-y"
