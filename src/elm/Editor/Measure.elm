@@ -1,4 +1,4 @@
-module Editor.Measure exposing (view, widthInPixels)
+module Editor.Measure exposing (view, viewMetadata)
 
 import Editor.Coordinate
 import Editor.Measure.Background
@@ -12,6 +12,65 @@ import Music
 import Music.Duration
 import Music.Meter
 import Zoom
+
+
+view :
+    { zoom : Zoom.Zoom
+    , onMovedMouseOverGrid : Editor.Coordinate.Music -> msg
+    , onClickedLeftMouseButton : Editor.Coordinate.Music -> msg
+    , onClickedRightMouseButton : Editor.Coordinate.Music -> msg
+    , onMovedMouseAway : msg
+    }
+    -> Music.Measure
+    -> Html msg
+view options measure =
+    let
+        width : Int
+        width =
+            widthInPixels measure options.zoom
+    in
+    Html.div
+        ([ Html.Attributes.class "piano-roll__measure"
+         , Html.Attributes.style "width"
+            (String.fromInt width ++ "px")
+         , Editor.Measure.Background.attribute
+            { width = width
+            , height = Zoom.cellSizeY options.zoom
+            , gridLines = gridLines options.zoom measure.meter
+            , zoom = options.zoom
+            }
+         , Html.Attributes.style "background-repeat" "repeat-y"
+         ]
+            ++ mouseEvents
+                { onMovedMouseOverGrid = options.onMovedMouseOverGrid
+                , onClickedLeftMouseButton = options.onClickedLeftMouseButton
+                , onClickedRightMouseButton = options.onClickedRightMouseButton
+                , onMovedMouseAway = options.onMovedMouseAway
+                , zoom = options.zoom
+                , measure = measure
+                }
+        )
+        []
+
+
+viewMetadata :
+    { zoom : Zoom.Zoom
+    }
+    -> Int
+    -> Music.Measure
+    -> Html msg
+viewMetadata options index measure =
+    let
+        width : Int
+        width =
+            widthInPixels measure options.zoom
+    in
+    Html.div
+        [ Html.Attributes.class "metadata__measure"
+        , Html.Attributes.style "width" (String.fromInt width ++ "px")
+        ]
+        [ Html.text (String.fromInt (index + 1))
+        ]
 
 
 widthInPixels : Music.Measure -> Zoom.Zoom -> Int
@@ -184,45 +243,6 @@ updateGridLinesAtIndices indices gridLineType list =
         (\index -> List.Extra.updateAt index (always gridLineType))
         list
         indices
-
-
-view :
-    { zoom : Zoom.Zoom
-    , onMovedMouseOverGrid : Editor.Coordinate.Music -> msg
-    , onClickedLeftMouseButton : Editor.Coordinate.Music -> msg
-    , onClickedRightMouseButton : Editor.Coordinate.Music -> msg
-    , onMovedMouseAway : msg
-    }
-    -> Music.Measure
-    -> Html msg
-view options measure =
-    let
-        width : Int
-        width =
-            widthInPixels measure options.zoom
-    in
-    Html.div
-        ([ Html.Attributes.class "piano-roll__measure"
-         , Html.Attributes.style "width"
-            (String.fromInt width ++ "px")
-         , Editor.Measure.Background.attribute
-            { width = width
-            , height = Zoom.cellSizeY options.zoom
-            , gridLines = gridLines options.zoom measure.meter
-            , zoom = options.zoom
-            }
-         , Html.Attributes.style "background-repeat" "repeat-y"
-         ]
-            ++ mouseEvents
-                { onMovedMouseOverGrid = options.onMovedMouseOverGrid
-                , onClickedLeftMouseButton = options.onClickedLeftMouseButton
-                , onClickedRightMouseButton = options.onClickedRightMouseButton
-                , onMovedMouseAway = options.onMovedMouseAway
-                , zoom = options.zoom
-                , measure = measure
-                }
-        )
-        []
 
 
 mouseEvents :

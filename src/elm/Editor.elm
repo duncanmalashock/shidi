@@ -171,9 +171,8 @@ viewMetadata options =
                 [ Html.Attributes.class "metadata__measures"
                 ]
                 (List.indexedMap
-                    (viewMetadataMeasure
+                    (Editor.Measure.viewMetadata
                         { zoom = options.zoom
-                        , toMsg = options.toMsg
                         }
                     )
                     options.measures
@@ -185,28 +184,6 @@ viewMetadata options =
         [ viewShim
         , viewMeasures
         ]
-
-
-viewMetadataMeasure :
-    { zoom : Zoom.Zoom
-    , toMsg : Msg -> msg
-    }
-    -> Int
-    -> Music.Measure
-    -> Html msg
-viewMetadataMeasure options index measure =
-    let
-        width : Int
-        width =
-            Editor.Measure.widthInPixels measure options.zoom
-    in
-    Html.div
-        [ Html.Attributes.class "metadata__measure"
-        , Html.Attributes.style "width" (String.fromInt width ++ "px")
-        ]
-        [ Html.text (String.fromInt (index + 1))
-        ]
-        |> Html.map options.toMsg
 
 
 viewPianoRoll :
